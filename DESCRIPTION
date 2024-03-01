@@ -1,0 +1,14 @@
+Package: cdAFLAPI
+Type: Package
+Title: Champion Data's AFL API
+Version: 1.3.3
+Author: Champion Data
+Maintainer: Aaron Brougham <aaron.brougham@championdata.com.au>
+Description: This package contains a suite of functions to interact with Champion Data's AFL API.
+    Authorised access to the API is required. For more details contact your client manager at Champion Data or contact the sales team at <sales@championdata.com.au>.
+License: use_proprietary_license()
+Encoding: UTF-8
+Depends: httr, jsonlite, tidyverse, data.table, purrr
+RoxygenNote: 7.2.3
+NeedsCompilation: no
+Packaged: 2024-02-25 23:24:45 UTC; aaron.brougham
