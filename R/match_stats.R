@@ -112,7 +112,6 @@ getChains <- function(matchId,...){
            end.y="chains.end.y",
            score.id='chains.end.score.matchTrxId',
            score.result='chains.end.score.result.code',
-           score.result.name='chains.end.score.result.name',
            score.points='chains.end.score.result.points',
            score.player.id='chains.end.score.player.id',
            score.player.name='chains.end.score.player.fullname',
