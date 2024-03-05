@@ -32,7 +32,9 @@ A data frame with a list of shots at goal for a match, with one row per shot.
    \item \code{y} Distance in metres from the centre of the ground (measuring boundary to boundary), with the goals being at zero and the boundary line at halfway being at (venue_widht / 2). Positive y is bottom of screen when running to the right.
    \item \code{x.std} The x coordinate of the shot transformed to a standard ground dimension (160x141).
    \item \code{y.std} The y coordinate of the shot transformed to a standard ground dimension (160x141).
+   \item \code{accuracy.exp} The expected accuracy of the shot.
    \item \code{result} The result of the shot. G / B / R / M.
+   \item \code{points.exp} The expected points of the shot.
    \item \code{points} The number of points obtained from the shot.
 }
 }
