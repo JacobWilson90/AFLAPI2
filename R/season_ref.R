@@ -28,24 +28,40 @@
 #'getSeason()
 #'@export
 getSeason <- function(seasonId,leagueId=1,levelId=1,...){
-    if(missing(seasonId)) seasonId <- getCurrentSeason(leagueId,levelId,...)
-    temp <- cdAPI(paste('leagues',leagueId,'levels',levelId,'seasons',seasonId,sep='/'),...) %>%
-        select(-c(phases.id,phases.name,phases.code)) %>%
-        unique()
-    if(!'rounds.lastCompleted.number'%in%names(temp)) temp <- temp %>% mutate(rounds.lastCompleted.number=NA_integer_,rounds.lastCompleted.end=NA_character_)
-    temp %>%
-        select(season.id='id',
-               competition.id=competitionId,
-               competition.code=competitionCode,
-               competition.name=competitionName,
-               startDate,startYear,endDate,endYear,
-               complete='matches.complete',
-               incomplete='matches.incomplete',
-               nextRound='rounds.nextScheduled.number',
-               nextRoundStart='rounds.nextScheduled.start',
-               lastRound='rounds.lastCompleted.number',
-               lastRoundEnd='rounds.lastCompleted.end',
-               firstMatchStart)
+  
+  # Handle season not being provided
+  if(missing(seasonId)) seasonId <- getCurrentSeason(leagueId,levelId,...)
+  
+  # Hit API for response
+  rawResponse <- cdAPIresponse(endpoint = paste('leagues',leagueId,'levels',levelId,'seasons',seasonId,sep='/'))
+  
+  # If response from cdAPIresponse is NULKL object, return
+  if(is.null(rawResponse)){
+    return(NULL)  
+  } else {
+    
+    # Convert response into DF
+    returnData <- data.frame(fromJSON(content(rawResponse,'text'),flatten=TRUE))
+    
+    # Get vector of the missing fields (IF ANY) in the call info
+    missing <- setdiff(getSeasonWhitelist,names(returnData))
+    
+    # Add on any of the missing columns in the response 
+    returnData[missing] <- lapply(missing, function(x) rep(NA, nrow(returnData)))
+    
+    # Remove Phases Info (H&A / Finals) - Do we want to do this?
+    returnData <- returnData[, !(names(returnData) %in% c("phases.id", "phases.name", "phases.code"))]
+    
+    # Return a single row
+    returnData <- unique(returnData)
+    
+    # Select exposed fields & rename columns
+    returnData        <- returnData[, names(getSeasonExposedFields)]
+    names(returnData) <- getSeasonExposedFields[names(returnData)]
+    
+    return(returnData)
+    
+  }
 }
 
 #'Fixture
@@ -360,8 +376,7 @@ getSquadPersons <- function(squad,seasonId,leagueId=1,levelId=1,...){
 #'    \item \code{weight} The person's weight in kilograms.
 #'}
 #'@examples
-#'getSquadPersons(10,2022)
-#'getSquadPersons('Carlton')
+#'getSquadLists(2022)
 #'@export
 getSquadLists <- function(seasonId,leagueId=1,levelId=1,...){
   
@@ -375,7 +390,7 @@ getSquadLists <- function(seasonId,leagueId=1,levelId=1,...){
   return <- NULL
   
   # Loop through each squad & bind
-  for(squad in squads) return <- return %>% bind_rows(getSquadPersons(squad,...))
+  return <- do.call(bind_rows, lapply(squads, function(squad) getSquadPersons(squad, seasonId, leagueId, levelId)))
   
   # output
   return(return %>% arrange(squad.name,name))

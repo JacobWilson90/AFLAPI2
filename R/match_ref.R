@@ -117,35 +117,38 @@ getMatch <- function(matchId,...){
 #'getMatchPersons(216085122,officials=TRUE)
 #'@export
 getMatchPersons <- function(matchId,officials=FALSE,...){
-    r <- cdAPI(paste('matches',matchId,'persons',sep='/'),df=FALSE,...) %>%
-        content()
-    if(length(r$squads$home$players)==0 | length(r$squads$away$players)==0) return(NULL)
-    homePlayers <- do.call(rbind,lapply(r$squads$home$players,unlist))
-    awayPlayers <- do.call(rbind,lapply(r$squads$away$players,unlist))
-    home <- with(r$squads$home,data.frame(match.id=matchId,id,name,code))
-    away <- with(r$squads$away,data.frame(match.id=matchId,id,name,code))
-    players <- rbind(data.frame(home,homePlayers),data.frame(away,awayPlayers)) %>%
-        select(match.id,squad.id='id',squad.name='name',squad.code='code',
-               person.id='personId',person.name='fullname',person.firstname='firstname',person.surname='surname',person.display='displayName',
-               jumper='jumperNumber',
-               selected.id='positions.selected.id',
-               selected.name='positions.selected.name',
-               selected.code='positions.selected.code',
-               position.id='positions.season.id',
-               position.name='positions.season.name',
-               position.code='positions.season.code',
-               height,weight,DOB='dateOfBirth',age='matchAge'
-
-        )
-    umpires <- data.frame(match.id=matchId,do.call(rbind,lapply(r$officials,unlist))) %>%
-        select(person.id='personId',person.name='fullname',person.display='displayName',
-               jumper='jumperNumber',
-               selected.id='positions.selected.id',
-               selected.name='positions.selected.name',
-               selected.code='positions.selected.code'
-               )
-    if(officials) return(umpires)
-    return(players)
+  r <- cdAPI(paste('matches',matchId,'persons',sep='/'),df=FALSE,...) %>%
+    content()
+  
+  if(length(r$squads$home$players)==0 | length(r$squads$away$players)==0) return(NULL)
+  
+  homePlayers <- do.call(rbind,lapply(r$squads$home$players,unlist))
+  awayPlayers <- do.call(rbind,lapply(r$squads$away$players,unlist))
+  home <- with(r$squads$home,data.frame(match.id=matchId,id,name,code))
+  away <- with(r$squads$away,data.frame(match.id=matchId,id,name,code))
+  players <- rbind(data.frame(home,homePlayers),data.frame(away,awayPlayers)) %>%
+    mutate(weight=NA) %>% 
+    select(match.id,squad.id='id',squad.name='name',squad.code='code',
+           person.id='personId',person.name='fullname',person.firstname='firstname',person.surname='surname',person.display='displayName',
+           jumper='jumperNumber',
+           selected.id='positions.selected.id',
+           selected.name='positions.selected.name',
+           selected.code='positions.selected.code',
+           position.id='positions.season.id',
+           position.name='positions.season.name',
+           position.code='positions.season.code',
+           height,weight,DOB='dateOfBirth',age='matchAge'
+           
+    )
+  umpires <- data.frame(match.id=matchId,do.call(rbind,lapply(r$officials,unlist))) %>%
+    select(person.id='personId',person.name='fullname',person.display='displayName',
+           jumper='jumperNumber',
+           selected.id='positions.selected.id',
+           selected.name='positions.selected.name',
+           selected.code='positions.selected.code'
+    )
+  if(officials) return(umpires)
+  return(players)
 }
 
 #'Match Metrics
