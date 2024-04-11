@@ -38,6 +38,5 @@ A data frame with a list of persons for all squads, with one row per person.
 Get a list of persons involved in all squads in a season. Currently limited to the playing list.
 }
 \examples{
-getSquadPersons(10,2022)
-getSquadPersons('Carlton')
+getSquadLists(2022)
 }
