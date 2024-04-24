@@ -1,7 +1,7 @@
 Package: cdAFLAPI
 Type: Package
 Title: Champion Data's AFL API
-Version: 1.4.4
+Version: 1.4.6
 Author: Champion Data
 Maintainer: Aaron Brougham <aaron.brougham@championdata.com.au>
 Description: This package contains a suite of functions to interact with Champion Data's AFL API.
@@ -9,6 +9,8 @@ Description: This package contains a suite of functions to interact with Champio
 License: use_proprietary_license()
 Encoding: UTF-8
 Depends: httr, jsonlite, tidyverse, data.table, purrr
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1
 NeedsCompilation: no
-Packaged: 2024-03-19 02:50:32 UTC; aaron.brougham
+Suggests: testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Packaged: 2024-04-23 01:08:18 UTC; aaron.brougham
