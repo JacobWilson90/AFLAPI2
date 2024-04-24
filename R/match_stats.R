@@ -566,109 +566,100 @@ getPeriodScores <- function(matchId,cumulative=FALSE,...){
 #'getMatchTransactions(216085122)
 #'@export
 getMatchTransactions <- function(matchId,...){
+  
+  # Hit API for response
+  rawResponse <- cdAPIresponse(endpoint = paste('matches',matchId,"transactions",sep = '/'), ...) 
+  
+  if(is.null(rawResponse)){
     
-    # The columns that contain pressure info that require unnesting.
-    pressurecols <- c("displayName", "fullname","personId","role")  
+    return(rawResponse)
     
-    # What we want to split the pressure info out into 
-    newPressureCols <- c("pressure.displayname1","pressure.displayname2","pressure.fullname1","pressure.fullname2","pressure.personid1","pressure.personid2","pressure.role1","pressure.role2")
+  } else {
     
-    # Empty DF of just second pressure player names for binding on when only one pressure player present in response
-    secondPressurePlayerNames = data.frame("pressure.displayname2"=character(0),"pressure.fullname2"=character(0),"pressure.personid2"=character(0),"pressure.role2"=character(0))
+    # Convert response to flat list
+    listResponse <- fromJSON(content(rawResponse,'text'),flatten=TRUE)
     
-    # Exhaustive list of possible columns
-    availCols <- c('matchId', 'id' , 'name', 'code', 'period', 'periodSecs', 'homeScore', 'awayScore', 'squad.name', 'squad.code', 'squad.id', 'zonePhysical', 'zoneLogical', 'person.displayName', 'person.fullname', 'person.id', 'location.x', 'location.xStd', 'location.y', 'location.yStd','locationRotated.x', 'locationRotated.xStd', 'locationRotated.y', 'locationRotated.yStd','pressure.name', 'pressure.code', 'pressure.points', 'displayName', 'fullname', 'personId', 'role', 'pressure.squad.code' , 'pressure.squad.id', 'pressure.squad.name', 'kicking.foot', 'kicking.intent', 'kicking.distance', 'kicking.direction', 'details.freeKickReason', 'details.freeKickContext', 'details.inside50Direction' ,'details.inside50Intent','details.shotSource', 'details.shotType', 'details.shotAngle', 'details.shotDistance', 'details.shotResult' , 'details.kickinDirection')
-    
-    # Hit API
-    temp <- cdAPI(paste('matches',matchId,"transactions",sep = '/'),df=TRUE,...) 
-    
-    if(is.null(temp)!=T){
-        temp <- temp %>% # ADD ...
-            dplyr::rename_with(~sub("^transactions\\.", "", .), dplyr::starts_with("transactions.")) %>%                                                                    # Remove 'transactions.' prefix
-            { if ("pressure.players" %in% colnames(.)) tidyr::unnest_wider(., pressure.players) else . } %>%                                                                # Conditional; If pressure players is part of the response, unnest, if not continue.        
-            dplyr::bind_rows(., data.frame(matrix(ncol = length(availCols))) %>% dplyr::rename_all(~availCols)) %>%                                                         # Bind on the empty df of all possible columns                 
-            dplyr::slice(1:nrow(.)-1) %>%                                                                                                                                   # Remove the row created by empty bind                 
-            dplyr::mutate(across(pressurecols, ~ purrr::map_chr(.x, toString))) %>%                                                                                         # Convert pressure columns of type vctrs_list_of to a char for delimiting
-            dplyr::mutate(across(pressurecols, ~ replace(., . %in% c("","NA"), NA))) %>%                                                                                    # Handler for blanks or string NA as a result of conversion to char
-            {
-                { . -> tmp } %>%                                                                                                                                              # Take temporary object of data
-                {data.frame(apply(.[pressurecols], 2, function(x) data.table::tstrsplit(x, ",")))} %>%                                                                        # Split out pressure columns appropriately
-                { if (ncol(.)==8) purrr::set_names(.,newPressureCols) else purrr::set_names(., newPressureCols[c(1,3,5,7)]) %>% bind_rows(.,secondPressurePlayerNames) } %>%  # Conditional; If split out chunk has 8 cols (2 pressure players exist in response) rename using newPressureCols, if 4 cols (only 1 pressure player exists in respoonse) name the split out cols with the pressure player 1 names AND bind on the second pressure player names using empty secondPressurePlayerNames DF
-                dplyr::bind_cols(tmp)                                                                                                                                         # Bind the flattened pressure columns back onto the tmp object
-            }  %>% 
-            select(                                                                                                                                                               # Select cols in appropriate order & rename where necessary
-                # Match Context
-                "match.id"= matchId ,
-                "trx.id"= id ,
-                "stat.code"= code ,
-                "stat.desc"= name ,
-                # Period
-                period,
-                "period.secs"= periodSecs,
-                # Score
-                "score.home"= homeScore,
-                "score.away"= awayScore,
-                # Squad
-                squad.name,
-                squad.code,
-                squad.id,
-                # Person
-                person.fullname,
-                person.displayName, 
-                person.id , 
-                # Pressure
-                pressure.squad.name , 
-                pressure.squad.id , 
-                pressure.squad.code , 
-                pressure.name,
-                pressure.code, 
-                pressure.points , 
-                pressure.fullname1,
-                pressure.displayname1 , 
-                pressure.personid1 , 
-                pressure.role1 , 
-                pressure.fullname2 , 
-                pressure.displayname2 ,
-                pressure.personid2,
-                pressure.role2 , 
-                # Zone
-                "zone.physical"= zonePhysical,
-                "zone.logical"= zoneLogical,
-                # Location
-                location.x,
-                location.y,
-                "location.x.std"= location.xStd,
-                "location.y.std"= location.yStd,
-                "location.rotated.x"=locationRotated.x,
-                "location.rotated.y"=locationRotated.y,
-                "location.rotated.x.std"=locationRotated.xStd,
-                "location.rotated.y.std"=locationRotated.yStd,
-                # Kicking
-                kicking.foot,
-                kicking.intent, 
-                kicking.distance, 
-                kicking.direction , 
-                # I50
-                "inside50.direction"=details.inside50Direction,
-                "inside50.intent"=details.inside50Intent,
-                # Shot
-                "shot.angle"=details.shotAngle ,
-                "shot.distance"=details.shotDistance, 
-                "shot.result"=details.shotResult,      
-                "shot.source"=details.shotSource , 
-                "shot.type"=details.shotType,
-                # Free Kick
-                "freekick.context"=details.freeKickContext ,
-                "freekick.reason"=details.freeKickReason,
-                # Kick In  
-                "kickin.direction"=details.kickinDirection
-            ) %>% 
-            suppressWarnings()                
+    # Handle if successful response but no events happened yet (second element of list empty)
+    if(is_empty(listResponse[[1]])) {
+      returnData        <- data.frame(matrix(ncol = length(getMatchTransactionsWhitelist), nrow = 0))
+      names(returnData) <- getMatchTransactionsWhitelist
+      message(paste0("\nWarning\n--> 0 rows of data in response.")) 
+      return(returnData)
+      
+      # Normal response, play on    
+    } else {
+      
+      # Convert list into DF
+      returnData <- data.frame(listResponse)
+      
+      # strip 'transactions.' prefix
+      names(returnData) <- gsub("^transactions\\.", "", names(returnData))
+      
+      # Get an index for each row attributed to a trx (for joining pressure info on only the first row)
+      returnData$trx_n <- ave(seq_along(returnData$id), returnData$id, FUN = seq_along)
+      
+      #################
+      # PRESSURE INFO #
+      #################
+      
+      # Split out & handle pressure player info, join back to returnData
+      if("pressure.players" %in% names(returnData)){
+        
+        # unnest & split out the pressure cols
+        pressureData <- returnData[,c("id","pressure.players")] %>%  # need to retain 'id' here for join later
+          tidyr::unnest_wider(., pressure.players, names_sep = "_")
+        
+        # Filter out all of rows that dont have pressure info (below lapply() wont work otherwise)
+        pressureData = pressureData[!is.na(pressureData[[2]]),]
+        
+        # delimit each of the pressure cols (x==2 coniditional so that 'id' col only comes in once)
+        pressureData <- lapply(2:5, function(x) {
+          if(x==2) cbind(pressureData[, "id"],do.call(rbind, as.list(pressureData[[x]])))
+          else cbind(do.call(rbind, as.list(pressureData[[x]])));
+        })
+        
+        # Convert to DF
+        pressureData = data.frame(pressureData)
+        
+        # This if/else will handle if there are *ONLY* 1-player pressure stats in the response OR if there are both 1&2 pressure stats, and handle accordingly
+        if(dim(pressureData)[2]==5){
+          names(pressureData)[2:5] <- getMatchTransactionsPressureCols1Player                                                                               # Rename with first pressure player colnames
+          pressureData[getMatchTransactionsPressureCols2Player] <- lapply(getMatchTransactionsPressureCols2Player, function(x) rep(NA, nrow(pressureData))) # Add in second pressure player cols as NA
+          pressureData$trx_n <- 1                                                                                                                           # Add in a trx_n column that = 1 so pressure info will only join to the first row of the given trx (if there are multiple rows for a single trx) // returnData has been set with a count for each row of each trx to join to
+        } else {
+          names(pressureData)[2:9] <- getMatchTransactionsPressureCols                            # 2nd pressure player stats exist so rename with full pressureCols vector
+          singlePressureTrx <- pressureData$pressure.personid1 == pressureData$pressure.personid2 # Identifying rows where pressure.personid1 = pressure.personid2 (therefore only single pressure player TRX)
+          pressureData[singlePressureTrx, getMatchTransactionsPressureCols2Player] <- NA          # Make second pressure player cols NA when only a single pressure player trx
+          pressureData$trx_n <- 1                                                                 # Add in a trx_n column that = 1 so pressure info will only join to the first row of the given trx (if there are multiple rows for a single trx) // returnData has been set with a count for each row of each trx to join to
+        }
+        
+        ########
+        
+        # Join the original data back on to the pressure info
+        returnData <- left_join(returnData,pressureData, by = c("id","trx_n")) %>% select(-"pressure.players",-"trx_n")
+        
+        # Turn pressure data into correct types
+        returnData[getMatchTransactionsPressureCols[1:4]] <- lapply(returnData[getMatchTransactionsPressureCols[1:4]], as.character)
+        returnData[getMatchTransactionsPressureCols[5:8]] <- lapply(returnData[getMatchTransactionsPressureCols[5:8]], as.integer)
+        
+      }
+      
+      #################
+      
+      # get vector of missing cols between whitelist and response
+      missing <- setdiff(getMatchTransactionsWhitelist,names(returnData))
+      
+      # Add on any of the missing columns in the response 
+      returnData[missing] <- lapply(missing, function(x) rep(NA, nrow(returnData)))
+      
+      # Select exposed fields (getMatchTransactionsExposedFields) & rename columns
+      returnData        <- returnData[, getMatchTransactionsExposedFields]
+      names(returnData) <- names(getMatchTransactionsExposedFields)
+      
+      return(returnData)
     }
-    
-    return(temp)
-    
-}  
+  }
+}
 
 #'Match Entries
 #'

@@ -212,3 +212,102 @@ getEntriesExposedFields <- c(match.id                                 = "matchId
                              entry.kick.result.location.rotated.y     = "entries.details.kick.resultLocationRotated.y",
                              entry.kick.result.location.rotated.x.std = "entries.details.kick.resultLocationRotated.xStd", 
                              entry.kick.result.location.rotated.y.std = "entries.details.kick.resultLocationRotated.yStd")
+
+#' getMatchTransactionsWhitelist
+#'
+#' This vector contains all the possible columns that can be returned by hitting the endpoint within the getMatchTransactions function.
+#' @keywords internal
+getMatchTransactionsWhitelist <- c("matchId", "id", "code", "name",
+                                  "period","periodSecs", 
+                                  "homeScore", "awayScore",
+                                  "squad.name", "squad.code", "squad.id",
+                                  "person.fullname", "person.displayName", "person.id",
+                                  "pressure.squad.name", "pressure.squad.id", "pressure.squad.code", "pressure.name", "pressure.code",
+                                  "pressure.points", "pressure.fullname1", "pressure.displayname1", "pressure.personid1", "pressure.role1",
+                                  "pressure.fullname2", "pressure.displayname2", "pressure.personid2", "pressure.role2",
+                                  "zonePhysical","zoneLogical",
+                                  "location.x", "location.y", "location.xStd", "location.yStd", "locationRotated.x",
+                                  "locationRotated.y", "locationRotated.xStd", "locationRotated.yStd", "kicking.foot", "kicking.intent",
+                                  "kicking.distance", "kicking.direction", "details.inside50Direction", "details.inside50Intent",
+                                  "details.shotAngle", "details.shotDistance", "details.shotResult", "details.shotSource", "details.shotType",
+                                  "details.freeKickContext", "details.freeKickReason", "details.kickinDirection")
+
+#' getMatchTransactionsExposedFields
+#'
+#' This vector contains all the fields we're exposing in the getMatchTransactions function and their equivalent renames.
+#' @keywords internal
+getMatchTransactionsExposedFields <- c(match.id            = "matchId",
+                                       trx.id              = "id",
+                                       stat.code           = "code",
+                                       stat.desc           = "name",
+                                       period              = "period",
+                                       period.secs         = "periodSecs",
+                                       score.home          = "homeScore",
+                                       score.away          = "awayScore",
+                                       squad.name          = "squad.name",
+                                       squad.code          = "squad.code",
+                                       squad.id            = "squad.id",
+                                       person.fullname     = "person.fullname",
+                                       person.displayName  = "person.displayName",
+                                       person.id           = "person.id",
+                                       pressure.squad.name = "pressure.squad.name", 
+                                       pressure.squad.id   = "pressure.squad.id",
+                                       pressure.squad.code = "pressure.squad.code",
+                                       pressure.name       = "pressure.name",
+                                       pressure.code       = "pressure.code",
+                                       pressure.points     = "pressure.points",
+                                       pressure.fullname1  = "pressure.fullname1",
+                                       pressure.displayname1 = "pressure.displayname1",
+                                       pressure.personid1 = "pressure.personid1",
+                                       pressure.role1      = "pressure.role1",
+                                       pressure.fullname2  = "pressure.fullname2",
+                                       pressure.displayname2 = "pressure.displayname2",
+                                       pressure.personid2  = "pressure.personid2",
+                                       pressure.role2      = "pressure.role2",
+                                       zone.physical       = "zonePhysical",
+                                       zone.logical        = "zoneLogical",
+                                       location.x          = "location.x",
+                                       location.y          = "location.y",
+                                       location.x.std      = "location.xStd",
+                                       location.y.std      = "location.yStd",
+                                       location.rotated.x  = "locationRotated.x",
+                                       location.rotated.y  = "locationRotated.y",
+                                       location.rotated.x.std = "locationRotated.xStd",
+                                       location.rotated.y.std = "locationRotated.yStd",
+                                       kicking.foot        = "kicking.foot",
+                                       kicking.intent      = "kicking.intent",
+                                       kicking.distance    = "kicking.distance",
+                                       kicking.direction   = "kicking.direction",
+                                       inside50.direction  = "details.inside50Direction",
+                                       inside50.intent     = "details.inside50Intent",
+                                       shot.angle          = "details.shotAngle",
+                                       shot.distance       = "details.shotDistance",
+                                       shot.result         = "details.shotResult",
+                                       shot.source         = "details.shotSource",
+                                       shot.type           = "details.shotType",
+                                       freekick.context    = "details.freeKickContext",
+                                       freekick.reason     = "details.freeKickReason",
+                                       kickin.direction    = "details.kickinDirection")
+
+#' getMatchTransactionsPressureCols
+#'
+#' This vector contains the column names of the pressure columns split out in the getMatchTransactions function.
+#' @keywords internal
+getMatchTransactionsPressureCols        <- c("pressure.displayname1","pressure.displayname2","pressure.fullname1","pressure.fullname2","pressure.personid1","pressure.personid2","pressure.role1","pressure.role2")
+getMatchTransactionsPressureCols1Player <- getMatchTransactionsPressureCols[c(1,3,5,7)] 
+getMatchTransactionsPressureCols2Player <- getMatchTransactionsPressureCols[c(2,4,6,8)] 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
