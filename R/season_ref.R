@@ -207,32 +207,27 @@ getLadder <- function(seasonId,roundNumber,leagueId=1,levelId=1,...){
   # Handling the default for not passing in a roundNo
   if(missing(roundNumber)) roundNumber <- NULL else roundNumber 
   
-  # Endpoint string going into cdAFLAPI
-  endpoint = paste('leagues',leagueId,'levels',levelId,'seasons',seasonId,'ladder',roundNumber,sep = "/")
+  # Hit endpoint
+  rawResponse  <- cdAPIresponse(endpoint = paste('leagues',leagueId,'levels',levelId,'seasons',seasonId,'ladder',roundNumber,sep = "/"))
   
-  cdAPI(endpoint = endpoint) %>% 
-    select(season.id='seasonId',
-           round.number='roundNumber',
-           position='squads.position',
-           squad.id='squads.id',
-           squad.name='squads.name',
-           squad.code='squads.code',
-           ladder.points='squads.ladderPoints',
-           ladder.percentage='squads.ladderPoints',
-           played='squads.matches.played',
-           win='squads.matches.win',
-           win.pct='squads.matches.winPct',
-           draw='squads.matches.draw',
-           loss='squads.matches.loss',
-           total.for='squads.scores.for',
-           total.against='squads.scores.against',
-           total.margin='squads.scores.margin',
-           average.for='squads.scores.forAverage',
-           average.against='squads.scores.againstAverage',
-           average.margin='squads.scores.marginAverage'
-    )
+  if(is.null(rawResponse)){
+    return(rawResponse)
+  } else {
+    
+    # Extract content into list
+    listResponse <- fromJSON(content(rawResponse,'text'),flatten=TRUE)
+    
+    # Convert to DF
+    returnData   <- data.frame(listResponse)
+    
+    # Select exposed fields (getLadderExposedFields) & rename columns
+    returnData        <- returnData[, getLadderExposedFields]
+    names(returnData) <- names(getLadderExposedFields)
+    
+    return(returnData)
+  }
 }
-
+  
 #'Squad List
 #'
 #'Get a list of squads participating in a season.

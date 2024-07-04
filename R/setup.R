@@ -81,8 +81,14 @@ cdAPIresponse <- function(matchId,endpoint,envir=c('','sandbox','dev'),base_url=
 cdAPIPOSTresponse <- function(matchId,endpoint,payload,baseUrl="https://api.afl.championdata.io",version="v1",envir="") { 
   
   # Player/Squad endpoint based on input
-  if(tolower(endpoint) %in% c("player","players")) endpointString <- paste('matches',matchId,'statistics','players',sep='/')
-  if(tolower(endpoint) %in% c("squad","squads"))  endpointString <- paste('matches',matchId,'statistics','squads',sep='/')
+  if(tolower(endpoint) %in% c("player","players")){
+    endpointString <- paste('matches',matchId,'statistics','players',sep='/')
+  } else if(tolower(endpoint) %in% c("squad","squads")){
+    endpointString <- paste('matches',matchId,'statistics','squads',sep='/')
+  } else {
+    message(paste0("Error\n--> Input for endpoint parameter: '",endpoint,"' is not a valid. Valid inputs are either 'players' or 'squads'."))
+    return()
+  }
   
   # URL for POST 
   postURL <- modify_url(gsub('afl-.ch','afl.ch',gsub('afl',paste('afl',envir[1],sep='-'),baseUrl)),path=paste(version,endpointString,sep='/'))
@@ -184,7 +190,7 @@ payloadDefaults <- function(payload) {
     
     # Print the result with ID in brackets if available
     if (length(missingFields) > 0) {
-      message(paste0("id: '", metricRequest$id, "' - ", paste(missingFields, collapse = ", ")))
+      message(paste0("payload id: '", metricRequest$id, "' [", paste(sQuote(missingFields), collapse = ", ")," using defaults]"))
     }
   }
 }
