@@ -28,8 +28,8 @@ A data frame with a list of shots at goal for a match, with one row per shot.
    \item \code{type} The type of shot attempted.
    \item \code{angle} A text description of the angle of the shot.
    \item \code{distance} A text description of the distance of the shot.
-   \item \code{x} Distance in metres from the centre of the ground (measuring goal to goal), with the goals being at positive (venue_length / 2).
-   \item \code{y} Distance in metres from the centre of the ground (measuring boundary to boundary), with the goals being at zero and the boundary line at halfway being at (venue_widht / 2). Positive y is bottom of screen when running to the right.
+   \item \code{x} Distance of the shot in metres from the centre of the ground (measuring horizontally from goal to goal), with the goals being at positive (venue_length / 2).
+   \item \code{y} Distance of the shot in metres from the centre of the ground (measuring vertically from wing to wing), with the goals being at zero and the boundary line at halfway being at (venue_width / 2). Positive y is bottom of screen when running to the right.
    \item \code{x.std} The x coordinate of the shot transformed to a standard ground dimension (160x141).
    \item \code{y.std} The y coordinate of the shot transformed to a standard ground dimension (160x141).
    \item \code{accuracy.exp} The expected accuracy of the shot.

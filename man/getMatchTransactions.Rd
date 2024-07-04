@@ -69,7 +69,7 @@ A data frame with a list of transactions for a match.
 }
 }
 \description{
-Get the list of transactions for a match. Returns observed & not yet observed metrics.
+Get the list of transactions for a match. Returns a dataframe with fixed column length, irrespective of any fields having recorded values for match or not.
 }
 \examples{
 getMatchTransactions(216085122)

@@ -4,7 +4,7 @@
 \alias{getSquadStats}
 \title{Match Squad Stats}
 \usage{
-getSquadStats(matchId, period, zone, context, ...)
+getSquadStats(matchId, period, zone, context, metric, team, lastXseconds, ...)
 }
 \arguments{
 \item{matchId}{A unique numerical identifier of a match.}
@@ -14,6 +14,12 @@ getSquadStats(matchId, period, zone, context, ...)
 \item{zone}{A text indicator of a zone on the field to filter results within a match. Accepts string values "D50","DM","AM","F50".}
 
 \item{context}{A text indicator of the context for squad statistics. Accepts "For" "Against" or "Diff".}
+
+\item{metric}{A text string of specific metric code(s) to be returned. This will result in the endpoint only returning these specific metrics. Note this endpoint is case sensitive and only works with metric codes (ie. \code{c("TACKLE", "GOAL")}}
+
+\item{team}{A (case-sensitive) text string of the team to return metrics for. Either \code{"home"} or \code{"away"}. Not passing anything to this param will return both teams.}
+
+\item{lastXseconds}{An integer that limits statistics to counting events that occurred in the last X number of seconds. (ie \code{lastXSeconds = 300} will return the last 5 minutes.}
 
 \item{...}{Arguments to be passed to internal functions, such as \code{envir} or \code{version}.}
 }

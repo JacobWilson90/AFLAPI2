@@ -3,7 +3,7 @@
 \docType{data}
 \name{getSeasonExposedFields}
 \alias{getSeasonExposedFields}
-\title{getShotsExposedFields}
+\title{getSeasonExposedFields}
 \format{
 An object of class \code{character} of length 15.
 }

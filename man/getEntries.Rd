@@ -4,7 +4,7 @@
 \alias{getEntries}
 \title{Match Entries}
 \usage{
-getEntries(matchId, verbose = F, ...)
+getEntries(matchId, ...)
 }
 \arguments{
 \item{matchId}{A unique numerical identifier of a match.}
