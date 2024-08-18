@@ -171,8 +171,8 @@ getFixture <- function(seasonId,leagueId=1,levelId=1,...){
 #'@param roundNumber An integer indicating the round number you are interested in. Returns the ladder as it stood after that round had completed. Defaults to the current ladder, or end of Home & Away for past seasons.
 #'@param leagueId A unique numerical identifier of a league. Defaults to AFL Men's Premiership.
 #'@param levelId A unique numerical identifier of a level. Defaults to Seniors.
-#'@return A data frame with the requested ladder, with one row per squad.
 #'@param ... Arguments to be passed to internal functions, such as \code{envir} or \code{version}.
+#'@return A data frame with the requested ladder, with one row per squad.
 #'\itemize{
 #'    \item \code{season.id} A numerical identifier of a season.
 #'    \item \code{round.number} The round number of the match. Continues to count up during finals.

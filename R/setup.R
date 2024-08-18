@@ -13,7 +13,7 @@
 cdAPI <- function(endpoint,envir=c('','sandbox','dev'),base_url='https://api.afl.championdata.io',version='v1',df=TRUE){
   
   api_url <- gsub('afl-.ch','afl.ch',gsub('afl',paste('afl',envir[1],sep='-'),base_url))
-  r       <- GET(modify_url(api_url,path=paste(version,endpoint,sep='/')),authenticate(api_un,api_pw))
+  r       <- GET(modify_url(api_url,path=paste(version,endpoint,sep='/')), authenticate(api_un,api_pw), add_headers(c(accept = "text/plain", `Content-Type` = "application/json", `Accept-Encoding` = "gzip")))
   
   if(r$status==403){
     message("Match yet to start")
@@ -46,7 +46,7 @@ cdAPI <- function(endpoint,envir=c('','sandbox','dev'),base_url='https://api.afl
 cdAPIresponse <- function(matchId,endpoint,envir=c('','sandbox','dev'),base_url='https://api.afl.championdata.io',version='v1'){
   
   getURL      <- gsub('afl-.ch','afl.ch',gsub('afl',paste('afl',envir[1],sep='-'),base_url))
-  rawResponse <- GET(modify_url(getURL,path=paste(version,endpoint,sep='/')),authenticate(api_un,api_pw))
+  rawResponse <- GET(modify_url(getURL,path=paste(version,endpoint,sep='/')), authenticate(api_un,api_pw), add_headers(c(accept = "text/plain", `Content-Type` = "application/json", `Accept-Encoding` = "gzip")))
   
   # Handling 
   if(rawResponse$status==200){
@@ -97,7 +97,7 @@ cdAPIPOSTresponse <- function(matchId,endpoint,payload,baseUrl="https://api.afl.
   rawResponse <- POST(postURL,
                       body   = payload,
                       encode = "json" ,
-                      add_headers(c("accept" = "text/plain","Content-Type" = "application/json")) , 
+                      add_headers(c("accept" = "text/plain", "Content-Type" = "application/json", `Accept-Encoding` = "gzip")) , 
                       authenticate(api_un,api_pw))
   
   # Handling 
@@ -139,62 +139,6 @@ to_minsec <- function(x,leadingZero=FALSE){
   return(output)
 }
 
-#'payloadDefaults (POST Functions Only)
-#'
-#'This function takes a POST payload as input and will print to the console any parameters of the payload that are missing & signal that defaults for these parameters are being used. For use inside of \code{getPlayerStatsPOST()} & \code{getSquadStatsPOST()} only visable when \code{verbose = TRUE}.
-#'@param payload A nested list containing the parcels of data to be returned by the API. See: \code{createPayload()} as a method of simplifying this step.
-#'@return A response object from the API call.
-#'@examples
-#'payloadDefaults(payload = payload)
-#'@keywords internal
-payloadDefaults <- function(payload) {
-  
-  payloadList <- payload[[1]]
-  
-  if(sub("MetricRequests", "", names(payload)) == "player"){
-    fieldsToCheck <- c("metricCodes", "team", "periods", "zones")
-  } else { 
-    fieldsToCheck <- c("metricCodes", "team", "periods", "zones", "context")
-  } 
-  
-  # Check if there are any missing parameters in any of the lists
-  anyMissing <- any(sapply(payloadList, function(metricRequest) {
-    any(sapply(fieldsToCheck, function(field) {
-      isMissing <- !field %in% names(metricRequest) ||
-        (is.character(metricRequest[[field]]) && (grepl("^#", metricRequest[[field]]) || metricRequest[[field]] == "")) ||
-        (is.list(metricRequest[[field]]) && length(metricRequest[[field]]) == 0)
-      return(isMissing)
-    }))
-  }))
-  
-  if (!anyMissing) {
-    return(message("All payload parameters supplied\n--> No defaults required."))
-  }
-  
-  message("Incomplete Payload\n--> Using defaults for parameters not supplied in the following")
-  
-  for (i in seq_along(payloadList)) {
-    
-    metricRequest <- payloadList[[i]]
-    missingFields <- character(0)
-    
-    for (field in fieldsToCheck) {
-      if (!field %in% names(metricRequest)) {
-        missingFields <- c(missingFields, field)
-      } else if (is.character(metricRequest[[field]]) && (grepl("^#", metricRequest[[field]]) || metricRequest[[field]] == "")) {
-        missingFields <- c(missingFields, field)
-      } else if (is.list(metricRequest[[field]]) && length(metricRequest[[field]]) == 0) {
-        missingFields <- c(missingFields, field)
-      }
-    }
-    
-    # Print the result with ID in brackets if available
-    if (length(missingFields) > 0) {
-      message(paste0("payload id: '", metricRequest$id, "' [", paste(sQuote(missingFields), collapse = ", ")," using defaults]"))
-    }
-  }
-}
-
 #'createPayload
 #'
 #'Create a payload for \code{getPlayerStatsPOST()} and \code{getSquadStatsPOST()} functions.
@@ -206,12 +150,98 @@ payloadDefaults <- function(payload) {
 #'createPayLoad(endpoint = "squad", D50_Tackles_Q1)
 #'@export
 createPayLoad <- function(endpoint, ...) {
-  
   if(!tolower(endpoint) %in% c("player","squad")) stop("Invalid endpoint specified\n--> Supported inputs to endpoint are 'player' and 'squad'.")
   
   string <- paste0("list(",tolower(endpoint),"MetricRequests = list(...))")
-  eval(parse(text=string))
-  
+  return <- eval(parse(text=string))
+  return(return)
 }
+
+#' #'Current Version of cdAFLAPI
+#' #'
+#' #'Return verstion details of the current version of the cdAFLAPI your system is running. 
+#' #'@param info A string for which information to return.
+#' #'\code{info='Version'} will return a string of the current version number. (Default)
+#' #'\code{info='Details'} will return a list containing package metadata.
+#' #'@examples
+#' #'cdAFLAPI.version()
+#' #'@export
+#' cdAFLAPI.version <- function(info="Version"){
+#'   # Description file
+#'   descFile <- system.file("DESCRIPTION", package = "cdAFLAPI")
+#'   # Return version no
+#'   if(tolower(info) == "version"){
+#'     return(paste0("v.",read.dcf(descFile)[1, "Version"][[1]]))
+#'   } else if(tolower(info) == "details"){
+#'     data <- as.data.frame(read.dcf(descFile))[c(1,4,7,5,6,10,14,15)] %>% 
+#'       mutate("Packaged"           = format(as.POSIXct(gsub("; aaron.brougham",replacement = "",Packaged)), "%B %dth, %Y")  ,
+#'              "Built on R Version" = sub(";.*", "", Built),
+#'              "Installed"          = format(as.POSIXct(sub(".*;\\s+(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2} UTC);.*", "\\1", Built)),"%B %dth, %Y")
+#'       ) %>% 
+#'       select(Package, Version, Description, Author, Maintainer, "Dependencies"=Depends, Packaged, "Built on R Version", "Installed")
+#'     
+#'     return(as.list(data))
+#'     # Invalid string entered
+#'   } else {
+#'     message("Error\n--> Invalid input entered. Valid inputs are 'Version' or 'Details'.")
+#'   }
+#' }
+#' 
+#' #'Update Package Version
+#' #'
+#' #'Function to install the most recent version of cdAFLAPI.
+#' #'@examples
+#' #'cdAFLAPI.update()
+#' #'@export
+#' cdAFLAPI.update <- function(...){
+#'   
+#'   args <- list(...)
+#'   v    <- args$v
+#'   
+#'   if("package:cdAFLAPI" %in% search()) detach('package:cdAFLAPI',unload=TRUE);                                                                        # Check package is loaded, detach if so.
+#'   suppressPackageStartupMessages(install.packages(paste0('http://www.championdata.com/scratch/api/cdAFLAPI',if(!missing(v))paste0('_', v), '.tar.gz'), source = TRUE, repos = NULL, quiet = T)) # Install
+#'   if("cdAFLAPI" %in% rownames(installed.packages())){
+#'     message(paste0("Success\n--> cdAFLAPI ", read.dcf(system.file("DESCRIPTION", package = "cdAFLAPI"))[1, "Version"]," installed.\n"))               # Print success
+#'     library('cdAFLAPI')
+#'     if(Sys.getenv("RSTUDIO")=="1"){ 
+#'       response <- readline(message("--> It is recommended you restart your Rstudio session before proceeding. Would you like to? (Y/N): "))
+#'       if(tolower(response) == "y") .rs.restartR() else return(invisible()) # Restart if running R studio
+#'     } else {
+#'       message("It is recommended that you restart your R session before proceeding.")
+#'     }
+#'   } else {
+#'     message("\nError\ncdAFLAPI has not installed. Please try manually running:\n`install.packages('http://www.championdata.com/scratch/api/cdAFLAPI.tar.gz', source = TRUE, repos = NULL)`\n")
+#'   }
+#' }
+
+
+
+# cdAFLAPI.update <- function(...){
+#   
+#   args <- list(...)
+#   v    <- args$v
+#   
+#   #print(paste0('http://www.championdata.com/scratch/api/cdAFLAPI',if(!is.null(v))paste0('_', v), '.tar.gz'))
+#   
+#   # If installed, remove
+#   if("cdAFLAPI" %in% rownames(installed.packages())) remove.packages("cdAFLAPI");    
+#   # If attached, detach
+#   if("package:cdAFLAPI" %in% search()) detach('package:cdAFLAPI',unload=TRUE);      
+#   
+#   suppressPackageStartupMessages(install.packages(paste0('http://www.championdata.com/scratch/api/cdAFLAPI',if(!is.null(v))paste0('_', v), '.tar.gz'), source = TRUE, repos = NULL, quiet = T)) # Install
+#   
+#   if("cdAFLAPI" %in% rownames(installed.packages())){
+#     message(paste0("Success\n--> cdAFLAPI ", read.dcf(system.file("DESCRIPTION", package = "cdAFLAPI"))[1, "Version"]," installed.\n"))               # Print success
+#     library('cdAFLAPI')
+#     if(Sys.getenv("RSTUDIO")=="1"){ 
+#       response <- readline(message("--> It is recommended you restart your Rstudio session before proceeding. Would you like to? (Y/N): "))
+#       if(tolower(response) == "y") .rs.restartR() else return(invisible()) # Restart if running R studio
+#     } else {
+#       message("It is recommended that you restart your R session before proceeding.")
+#     }
+#   } else {
+#     message("\nError\ncdAFLAPI has not installed. Please try manually running:\n`install.packages('http://www.championdata.com/scratch/api/cdAFLAPI.tar.gz', source = TRUE, repos = NULL)`\n")
+#   }
+# }
 
 

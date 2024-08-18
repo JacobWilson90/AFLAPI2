@@ -9,6 +9,7 @@
 #'    \item \code{season.id} A numerical identifier of a season.
 #'    \item \code{type.id} A numerical indicator of the match type.
 #'    \item \code{type.name} A description of the match type.
+#'    \item \code{type.code} A short code describing the match type.
 #'    \item \code{round.number} The round number of the match. Continues to count up during finals.
 #'    \item \code{round.phaseNumber} The round number of the match within the phase. Starts again from one for finals.
 #'    \item \code{match.id} A unique numerical identifier of a match.
@@ -40,47 +41,53 @@
 #'    \item \code{winner.id} The squad ID of the winning team.
 #'    \item \code{result} A text description of the match result.
 #'    \item \code{result.code} A short text description of the match result.
+#'    
+#'    \item \code{coin.toss.winning.squad.id} The squad id of the squad who won the coin toss.
+#'    \item \code{coin.toss.direction.decision} The direction the squad who won the coin toss decided to kick to.
+#'    \item \code{attendance} The crowd attendance for the given match.
+
 #'}
 #'@examples
 #'getMatch(216085122)
 #'@export
 getMatch <- function(matchId,...){
-    temp <- fromJSON(cdAPI(paste('matches',matchId,sep='/'),...,df=FALSE) %>% content(as='text'),flatten=TRUE)
-    temp <- data.frame(temp[!names(temp)%in%c('time','periods')])
-    if(!'winningSquadId'%in%names(temp)) temp <- temp %>% mutate(winningSquadId=NA_integer_,,
-                                                                 result='',
-                                                                 resultCode='')
-    if(!'home.score.goals'%in%names(temp)) temp <- temp %>% mutate(home.score.goals=NA_integer_,
-                                                                   home.score.behinds=NA_integer_,
-                                                                   home.score.points=NA_integer_,
-                                                                   away.score.goals=NA_integer_,
-                                                                   away.score.behinds=NA_integer_,
-                                                                   away.score.points=NA_integer_)
-                                                                   
-    temp %>%
-        select(competition.name='competitionName',
-               season.id='seasonId',
-               type.id,type.name,type.code,
-               round.number='roundNumber',
-               round.phaseNumber='phaseRoundNumber',
-               match.id='id',
-               match.name='name',
-               match.code='code',
-               match.start='date.utcMatchStart',
-               match.date='date.startDate',
-               match.time='date.startTime',
-               home.id,home.name,home.code,away.id,away.name,away.code,
-               venue.id,venue.name,venue.code,venue.timezone='venue.timeZone',
-               status.id,status.name,status.type.id='status.typeId',status.type.id.name='status.typeName',
-               home.goals='home.score.goals',
-               home.behinds='home.score.behinds',
-               home.points='home.score.points',
-               away.goals='away.score.goals',
-               away.behinds='away.score.behinds',
-               away.points='away.score.points',
-               winner.id='winningSquadId',
-               result,result.code='resultCode'
-        ) %>% unique()
+  
+  rawResponse <- cdAPIresponse(endpoint = paste('matches',matchId,sep='/'),...)
+  
+  if(is.null(rawResponse)){
+    return(rawResponse)
+  } else {
+    
+    # Convert response to flat list
+    listResponse <- fromJSON(content(rawResponse,'text'),flatten=TRUE)
+    
+    # Check if any of the elements of listResponse are empty ($periods & $time may be if match not yet started)
+    emptyIndexes <- which(lapply(names(listResponse), function(x) purrr::is_empty(listResponse[[x]]))==TRUE)
+    
+    # If there are some empty indexes, use bridging logic (turning listResponse into DF will ERROR if there are empty elements present)
+    if(length(emptyIndexes)>0){
+      # Find names of empty elements
+      emptyNames <- names(listResponse)[emptyIndexes]
+      
+      # Build returnData not including empty names
+      returnData <- data.frame(listResponse[!names(listResponse) %in% emptyNames])
+    } else {
+      # Construct as normal & convert list into DF (in getMatch we only return 1 row, so filter down to that here)
+      returnData <- data.frame(listResponse)[1,]
+    }
+  }
+  # Get vector of the missing fields (IF ANY) in the call info
+  # AND combine them with any of the emptyNames from above (where the fields exist but they are empty)
+  missing <- c(setdiff(getMatchWhitelist,names(returnData)), base::get0("emptyNames", ifnotfound = NULL))
+  
+  # Add on any of the missing columns in the response 
+  returnData[missing] <- lapply(missing, function(x) rep(NA, nrow(returnData)))
+  
+  # Select exposed fields (getMatchExposedFields) & rename columns
+  returnData   <- returnData[, getMatchExposedFields]
+  names(returnData) <- names(getMatchExposedFields)
+  
+  return(returnData)
 }
 
 #'Match Persons
@@ -117,38 +124,72 @@ getMatch <- function(matchId,...){
 #'getMatchPersons(216085122,officials=TRUE)
 #'@export
 getMatchPersons <- function(matchId,officials=FALSE,...){
-  r <- cdAPI(paste('matches',matchId,'persons',sep='/'),df=FALSE,...) %>%
-    content()
   
-  if(length(r$squads$home$players)==0 | length(r$squads$away$players)==0) return(NULL)
+  # Hit API
+  rawResponse <- cdAPIresponse(endpoint = paste('matches',matchId,'persons',sep='/'),...)
   
-  homePlayers <- do.call(rbind,lapply(r$squads$home$players,unlist))
-  awayPlayers <- do.call(rbind,lapply(r$squads$away$players,unlist))
-  home <- with(r$squads$home,data.frame(match.id=matchId,id,name,code))
-  away <- with(r$squads$away,data.frame(match.id=matchId,id,name,code))
-  players <- rbind(data.frame(home,homePlayers),data.frame(away,awayPlayers)) %>%
-    mutate(weight=NA) %>% 
-    select(match.id,squad.id='id',squad.name='name',squad.code='code',
-           person.id='personId',person.name='fullname',person.firstname='firstname',person.surname='surname',person.display='displayName',
-           jumper='jumperNumber',
-           selected.id='positions.selected.id',
-           selected.name='positions.selected.name',
-           selected.code='positions.selected.code',
-           position.id='positions.season.id',
-           position.name='positions.season.name',
-           position.code='positions.season.code',
-           height,weight,DOB='dateOfBirth',age='matchAge'
-           
-    )
-  umpires <- data.frame(match.id=matchId,do.call(rbind,lapply(r$officials,unlist))) %>%
-    select(person.id='personId',person.name='fullname',person.display='displayName',
-           jumper='jumperNumber',
-           selected.id='positions.selected.id',
-           selected.name='positions.selected.name',
-           selected.code='positions.selected.code'
-    )
-  if(officials) return(umpires)
-  return(players)
+  # If null, return whats returned by rawResponse
+  if(is.null(rawResponse)){
+    return(rawResponse)
+  } else {
+    
+    # Convert response to flat list
+    listResponse <- fromJSON(content(rawResponse,'text'),flatten=TRUE)
+    
+    # If user sets officials = TRUE
+    if(officials){
+      # Check if officials list is empty (will be for AFLW)
+      if(is_empty(listResponse$officials)){
+        message("\nWarning\n--> No officials information for matchId supplied.")
+        returnData <- getMatchPersons_officialsDF
+      } else {
+        # Convert officials element to DF
+        returnData <- data.frame(listResponse$officials)
+        
+        # Get vector of the missing fields (IF ANY) in the call info
+        missing <- c(setdiff(getMatchPersons_officialsWhitelist,names(returnData)))
+        
+        # Add on any of the missing columns in the response 
+        returnData[missing] <- lapply(missing, function(x) rep(NA, nrow(returnData)))
+        
+        # Select exposed fields (getMatchExposedFields) & rename columns
+        returnData        <- returnData[, getMatchPersons_officialsExposedFields]
+        names(returnData) <- names(getMatchPersons_officialsExposedFields)
+      }
+      return(returnData)
+    } else {
+      # Convert squads list into DF
+      returnData <- data.frame(listResponse$squads)
+      
+      # Get vector of the missing fields (IF ANY) in the call info
+      missing <- c(setdiff(c(getMatchPersons_awayWhitelist,getMatchPersons_homeWhitelist),names(returnData)))
+      
+      # Add on any of the missing columns in the response 
+      returnData[missing] <- lapply(missing, function(x) rep(NA, nrow(returnData)))
+      
+      # home
+      home        <- returnData[,getMatchPersons_homeWhitelist]
+      names(home) <- sub("home\\.players\\.|home\\.", "", names(home))
+      # away
+      away        <- returnData[,getMatchPersons_awayWhitelist]
+      names(away) <- sub("away\\.players\\.|away\\.", "", names(away))
+      
+      # Bind home & away together
+      returnData <- bind_rows(home,away)
+      
+      # Add match.id
+      returnData$match.id <- listResponse$matchId
+      
+      # Add empty weight field
+      returnData$weight <- NA
+      
+      # Select exposed fields (getMatchExposedFields) & rename columns
+      returnData        <- returnData[, getMatchPersonsExposedFields]
+      names(returnData) <- names(getMatchPersonsExposedFields)
+      
+    }
+    return(returnData)
+  }
 }
 
 #'Match Metrics
@@ -208,33 +249,38 @@ getMetrics <- function(matchId,...){
 #'    \item \code{state.name} The venue's state.
 #'    \item \code{state.code} A short code representing the venue's state.
 #'    \item \code{timezone} The timezone of the venue.
+#'    \item \code{length} The length of the venue in metres.
+#'    \item \code{width} The width of the venue in metres.
 #'}
 #'@examples
 #'getVenue(216085122)
 #'@export
 getVenue <- function(matchId,...){
   
+  rawResponse <- cdAPIresponse(endpoint = paste('matches',matchId,'venue',sep='/'),...)
   
-  temp <- cdAPI(paste('matches',matchId,'venue',sep='/'),...) 
+  if(is.null(rawResponse)){
+    return(rawResponse)
+  } else {
+    # Convert response to flat list
+    listResponse <- fromJSON(content(rawResponse,'text'),flatten=TRUE)
+    
+    # Convert list into DF
+    returnData <- data.frame(listResponse)
+    
+    # Get vector of the missing fields (IF ANY) in the call info
+    missing <- setdiff(getVenueWhitelist,names(returnData))
+    
+    # Add on any of the missing columns in the response 
+    returnData[missing] <- lapply(missing, function(x) rep(NA, nrow(returnData)))
+  }
+  # Select exposed fields (getVenueExposedFields) & rename columns
+  returnData        <- returnData[, getVenueExposedFields]
+  names(returnData) <- names(getVenueExposedFields)
   
-  if(!'location.country.state.id'%in%names(temp)) temp <- temp %>% 
-      mutate(location.country.state.id=NA_integer_ , 
-             location.country.state.name = NA, 
-             location.country.state.code = NA)  
-  
-        temp %>% select(match.id='matchId',
-               id,name,code,
-               country.id='location.country.id',
-               country.name='location.country.name',
-               country.code='location.country.code',
-               state.id='location.country.state.id',
-               state.name='location.country.state.name',
-               state.code='location.country.state.code',
-               timezone='location.timezone',
-               length='dimensions.length',
-               width='dimensions.width'
-               )
+  return(returnData)
 }
+
 
 #'Match Periods
 #'

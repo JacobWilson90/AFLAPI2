@@ -104,3 +104,8 @@ getCurrentSeason <- function(leagueId=1,levelId=1,...){
     select(season.id) %>%
     pull()
 }
+
+
+
+
+
