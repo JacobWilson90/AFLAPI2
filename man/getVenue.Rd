@@ -25,6 +25,8 @@ A data frame with details about the match venue.
    \item \code{state.name} The venue's state.
    \item \code{state.code} A short code representing the venue's state.
    \item \code{timezone} The timezone of the venue.
+   \item \code{length} The length of the venue in metres.
+   \item \code{width} The width of the venue in metres.
 }
 }
 \description{

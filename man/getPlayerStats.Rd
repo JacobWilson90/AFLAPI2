@@ -17,7 +17,7 @@ getPlayerStats(matchId, period, zone, metric, team, lastXseconds, ...)
 
 \item{team}{A (case-sensitive) text string of the team to return metrics for. Either \code{"home"} or \code{"away"}. Not passing anything to this param will return both teams.}
 
-\item{lastXseconds}{An integer that limits statistics to counting events that occurred in the last X number of seconds. (ie \code{lastXSeconds = 300} will return the last 5 minutes.}
+\item{lastXseconds}{An integer that limits statistics to counting events that occurred in the last X number of seconds. (ie. \code{lastXSeconds = 300} will return the last 5 minutes)}
 
 \item{...}{Arguments to be passed to internal functions, such as \code{envir} or \code{version}.}
 }
@@ -33,6 +33,7 @@ A data frame with a list of metrics for a match for each player.
    \item \code{player.display} The display name of the player, represented as first initial and surname.
    \item \code{code} The metric code (ALL_CAPS format).
    \item \code{name} The metric name (singular).
+   \item \code{id} The unique numerical identifier for the given statistic code.
    \item \code{plural} The metric name (plural).
    \item \code{value} The numeric metric value with no formatting applied.
    \item \code{display} The formatted metric value as a text string.

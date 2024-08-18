@@ -4,7 +4,7 @@
 \alias{getPlayerStatsPOST}
 \title{Match Player Stats (POST Endpoint)}
 \usage{
-getPlayerStatsPOST(matchId, payload, info = FALSE, verbose = F, ...)
+getPlayerStatsPOST(matchId, payload, info = FALSE, verbose = FALSE, ...)
 }
 \arguments{
 \item{matchId}{A unique numerical identifier of a match.}

@@ -36,6 +36,7 @@ A data frame with a list of quarters and scores for each quarter.
    \item \code{away.result} Period result for the away squad. W/L/D.
    \item \code{away.margin} Scoreboard margin for the away squad.
    \item \code{winning.squad.id} The ID of the winning squad.
+   \item \code{cumulative} TRUE/FALSE based on the \code{cumulative} parameter passed to the function.
 }
 }
 \description{

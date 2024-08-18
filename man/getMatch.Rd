@@ -18,6 +18,7 @@ A data frame with details about a match.
    \item \code{season.id} A numerical identifier of a season.
    \item \code{type.id} A numerical indicator of the match type.
    \item \code{type.name} A description of the match type.
+   \item \code{type.code} A short code describing the match type.
    \item \code{round.number} The round number of the match. Continues to count up during finals.
    \item \code{round.phaseNumber} The round number of the match within the phase. Starts again from one for finals.
    \item \code{match.id} A unique numerical identifier of a match.
@@ -49,6 +50,10 @@ A data frame with details about a match.
    \item \code{winner.id} The squad ID of the winning team.
    \item \code{result} A text description of the match result.
    \item \code{result.code} A short text description of the match result.
+   
+   \item \code{coin.toss.winning.squad.id} The squad id of the squad who won the coin toss.
+   \item \code{coin.toss.direction.decision} The direction the squad who won the coin toss decided to kick to.
+   \item \code{attendance} The crowd attendance for the given match.
 }
 }
 \description{

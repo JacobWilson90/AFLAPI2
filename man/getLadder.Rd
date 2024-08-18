@@ -15,7 +15,10 @@ getLadder(seasonId, roundNumber, leagueId = 1, levelId = 1, ...)
 
 \item{levelId}{A unique numerical identifier of a level. Defaults to Seniors.}
 
-\item{...}{Arguments to be passed to internal functions, such as \code{envir} or \code{version}.
+\item{...}{Arguments to be passed to internal functions, such as \code{envir} or \code{version}.}
+}
+\value{
+A data frame with the requested ladder, with one row per squad.
 \itemize{
    \item \code{season.id} A numerical identifier of a season.
    \item \code{round.number} The round number of the match. Continues to count up during finals.
@@ -36,10 +39,7 @@ getLadder(seasonId, roundNumber, leagueId = 1, levelId = 1, ...)
    \item \code{average.for} The average number of points scored by the squad per match.
    \item \code{average.against} The average number of points conceded by the squad per match.
    \item \code{average.margin} The average points differential for the squad per match.
-}}
 }
-\value{
-A data frame with the requested ladder, with one row per squad.
 }
 \description{
 Get the ladder for a given season.
