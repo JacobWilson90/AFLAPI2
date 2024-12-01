@@ -39,14 +39,17 @@ cdAPI <- function(endpoint,envir=c('','sandbox','dev'),base_url='https://api.afl
 #'@param envir A short code representing the environment to hit. Empty string = Production, 'sandbox' = Sandbox environment, 'dev' = Development environment (Internal Champion Data use only).
 #'@param base_url The base URL for the API. Defaults to the AFL API.
 #'@param version The version number of the API. Defaults to 1.
+#'@param verbose Logical, default is \code{FALSE}. If \code{TRUE}, prints the full URL string passed to the API.
 #'@return A response object.
 #'@examples
 #'cdAPIresponse(matchId,paste('matches',matchId,'entries',sep='/')
 #'@export
-cdAPIresponse <- function(matchId,endpoint,envir=c('','sandbox','dev'),base_url='https://api.afl.championdata.io',version='v1'){
+cdAPIresponse <- function(matchId,endpoint,envir=c('','sandbox','dev'),base_url='https://api.afl.championdata.io',version='v1',verbose = F){
   
   getURL      <- gsub('afl-.ch','afl.ch',gsub('afl',paste('afl',envir[1],sep='-'),base_url))
-  rawResponse <- GET(modify_url(getURL,path=paste(version,endpoint,sep='/')), authenticate(api_un,api_pw), add_headers(c(accept = "text/plain", `Content-Type` = "application/json", `Accept-Encoding` = "gzip")))
+  fullUrl     <- modify_url(getURL,path=paste(version,endpoint,sep='/'))
+  if(verbose) message("Full URL: ",fullUrl)
+  rawResponse <- GET(fullUrl, authenticate(api_un,api_pw), add_headers(c(accept = "text/plain", `Content-Type` = "application/json", `Accept-Encoding` = "gzip")))  
   
   # Handling 
   if(rawResponse$status==200){
@@ -150,98 +153,72 @@ to_minsec <- function(x,leadingZero=FALSE){
 #'createPayLoad(endpoint = "squad", D50_Tackles_Q1)
 #'@export
 createPayLoad <- function(endpoint, ...) {
-  if(!tolower(endpoint) %in% c("player","squad")) stop("Invalid endpoint specified\n--> Supported inputs to endpoint are 'player' and 'squad'.")
+  if(!tolower(endpoint) %in% c("player","squad")) stop("Invalid endpoint specified\n--> Supported inputs to endpoint parameter are 'player' and 'squad'.")
   
   string <- paste0("list(",tolower(endpoint),"MetricRequests = list(...))")
   return <- eval(parse(text=string))
   return(return)
 }
 
-#' #'Current Version of cdAFLAPI
-#' #'
-#' #'Return verstion details of the current version of the cdAFLAPI your system is running. 
-#' #'@param info A string for which information to return.
-#' #'\code{info='Version'} will return a string of the current version number. (Default)
-#' #'\code{info='Details'} will return a list containing package metadata.
-#' #'@examples
-#' #'cdAFLAPI.version()
-#' #'@export
-#' cdAFLAPI.version <- function(info="Version"){
-#'   # Description file
-#'   descFile <- system.file("DESCRIPTION", package = "cdAFLAPI")
-#'   # Return version no
-#'   if(tolower(info) == "version"){
-#'     return(paste0("v.",read.dcf(descFile)[1, "Version"][[1]]))
-#'   } else if(tolower(info) == "details"){
-#'     data <- as.data.frame(read.dcf(descFile))[c(1,4,7,5,6,10,14,15)] %>% 
-#'       mutate("Packaged"           = format(as.POSIXct(gsub("; aaron.brougham",replacement = "",Packaged)), "%B %dth, %Y")  ,
-#'              "Built on R Version" = sub(";.*", "", Built),
-#'              "Installed"          = format(as.POSIXct(sub(".*;\\s+(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2} UTC);.*", "\\1", Built)),"%B %dth, %Y")
-#'       ) %>% 
-#'       select(Package, Version, Description, Author, Maintainer, "Dependencies"=Depends, Packaged, "Built on R Version", "Installed")
-#'     
-#'     return(as.list(data))
-#'     # Invalid string entered
-#'   } else {
-#'     message("Error\n--> Invalid input entered. Valid inputs are 'Version' or 'Details'.")
-#'   }
-#' }
-#' 
-#' #'Update Package Version
-#' #'
-#' #'Function to install the most recent version of cdAFLAPI.
-#' #'@examples
-#' #'cdAFLAPI.update()
-#' #'@export
-#' cdAFLAPI.update <- function(...){
-#'   
-#'   args <- list(...)
-#'   v    <- args$v
-#'   
-#'   if("package:cdAFLAPI" %in% search()) detach('package:cdAFLAPI',unload=TRUE);                                                                        # Check package is loaded, detach if so.
-#'   suppressPackageStartupMessages(install.packages(paste0('http://www.championdata.com/scratch/api/cdAFLAPI',if(!missing(v))paste0('_', v), '.tar.gz'), source = TRUE, repos = NULL, quiet = T)) # Install
-#'   if("cdAFLAPI" %in% rownames(installed.packages())){
-#'     message(paste0("Success\n--> cdAFLAPI ", read.dcf(system.file("DESCRIPTION", package = "cdAFLAPI"))[1, "Version"]," installed.\n"))               # Print success
-#'     library('cdAFLAPI')
-#'     if(Sys.getenv("RSTUDIO")=="1"){ 
-#'       response <- readline(message("--> It is recommended you restart your Rstudio session before proceeding. Would you like to? (Y/N): "))
-#'       if(tolower(response) == "y") .rs.restartR() else return(invisible()) # Restart if running R studio
-#'     } else {
-#'       message("It is recommended that you restart your R session before proceeding.")
-#'     }
-#'   } else {
-#'     message("\nError\ncdAFLAPI has not installed. Please try manually running:\n`install.packages('http://www.championdata.com/scratch/api/cdAFLAPI.tar.gz', source = TRUE, repos = NULL)`\n")
-#'   }
-#' }
+#'Update Package Version
+#'
+#'Function to install the most recent version of cdAFLAPI. Will prompt for a session restart if using R Studio (recommended).
+#'@examples
+#'cdAFLAPI.update()
+#'@export
+cdAFLAPI.update <- function(...){
+  
+  args <- list(...)
+  v    <- args$v
+  
+  print(paste0('http://www.championdata.com/scratch/api/cdAFLAPI',if(!is.null(v))paste0('_', v), '.tar.gz'))
+  
+  # If installed, remove
+  if("cdAFLAPI" %in% rownames(installed.packages())) remove.packages("cdAFLAPI");
+  # If attached, detach
+  if("package:cdAFLAPI" %in% search()) detach('package:cdAFLAPI',unload=TRUE);
+  
+  suppressPackageStartupMessages(install.packages(paste0('http://www.championdata.com/scratch/api/cdAFLAPI',if(!is.null(v))paste0('_', v), '.tar.gz'), source = TRUE, repos = NULL, quiet = T)) # Install
+  
+  if("cdAFLAPI" %in% rownames(installed.packages())){
+    message(paste0("Success:\n--> cdAFLAPI ", read.dcf(system.file("DESCRIPTION", package = "cdAFLAPI"))[1, "Version"]," installed."))               # Print success
+    library('cdAFLAPI')
+    if(Sys.getenv("RSTUDIO")=="1"){
+      response <- readline(message("--> It is recommended you restart your Rstudio session before proceeding. Would you like to? (Y/N): "))
+      if(tolower(response) == "y") .rs.restartR() else return(invisible()) # Restart if running R studio
+    } else {
+      message("It is recommended that you restart your R session before proceeding.")
+    }
+  } else {
+    message("\nError\ncdAFLAPI has not installed. Please try manually running:\n`install.packages('http://www.championdata.com/scratch/api/cdAFLAPI.tar.gz', source = TRUE, repos = NULL)`\n")
+  }
+}
 
-
-
-# cdAFLAPI.update <- function(...){
-#   
-#   args <- list(...)
-#   v    <- args$v
-#   
-#   #print(paste0('http://www.championdata.com/scratch/api/cdAFLAPI',if(!is.null(v))paste0('_', v), '.tar.gz'))
-#   
-#   # If installed, remove
-#   if("cdAFLAPI" %in% rownames(installed.packages())) remove.packages("cdAFLAPI");    
-#   # If attached, detach
-#   if("package:cdAFLAPI" %in% search()) detach('package:cdAFLAPI',unload=TRUE);      
-#   
-#   suppressPackageStartupMessages(install.packages(paste0('http://www.championdata.com/scratch/api/cdAFLAPI',if(!is.null(v))paste0('_', v), '.tar.gz'), source = TRUE, repos = NULL, quiet = T)) # Install
-#   
-#   if("cdAFLAPI" %in% rownames(installed.packages())){
-#     message(paste0("Success\n--> cdAFLAPI ", read.dcf(system.file("DESCRIPTION", package = "cdAFLAPI"))[1, "Version"]," installed.\n"))               # Print success
-#     library('cdAFLAPI')
-#     if(Sys.getenv("RSTUDIO")=="1"){ 
-#       response <- readline(message("--> It is recommended you restart your Rstudio session before proceeding. Would you like to? (Y/N): "))
-#       if(tolower(response) == "y") .rs.restartR() else return(invisible()) # Restart if running R studio
-#     } else {
-#       message("It is recommended that you restart your R session before proceeding.")
-#     }
-#   } else {
-#     message("\nError\ncdAFLAPI has not installed. Please try manually running:\n`install.packages('http://www.championdata.com/scratch/api/cdAFLAPI.tar.gz', source = TRUE, repos = NULL)`\n")
-#   }
-# }
-
+#'Current Version of cdAFLAPI
+#'
+#'Return version details of the current version of the cdAFLAPI your system is running.
+#'@param info A string for which information to return.
+#'\code{info='Version'} will return a string of the current version number. (Default)
+#'\code{info='Details'} will return a list containing package metadata of your current version.
+#'@examples
+#'cdAFLAPI.version()
+#'@export
+cdAFLAPI.version <- function(info="Version"){
+  # Description file
+  descFile <- system.file("DESCRIPTION", package = "cdAFLAPI")
+  # Return version no
+  if(tolower(info) == "version"){
+    return(paste0("v.",read.dcf(descFile)[1, "Version"][[1]]))
+  } else if(tolower(info) == "details"){
+    data <- as.data.frame(read.dcf(descFile))[c(1,4,7,5,6,10,14,15)] %>%
+      mutate("Packaged" = format(as.POSIXct(gsub("; aaron.brougham", "", Packaged)), "%B %d, %Y") ,
+             "Built on R Version" = sub(";.*", "", Built),
+             "Installed" = format(as.POSIXct(gsub(".*; ; | UTC; .*", "", Built)), "%B %d, %Y")) %>%
+      select(Package, Version, Description, Author, Maintainer, "Dependencies"=Depends, Packaged, "Built on R Version", "Installed")
+    return(as.list(data))
+    # Invalid string entered
+  } else {
+    message("Error\n--> Invalid input entered. Valid inputs are 'Version' or 'Details'.")
+  }
+}
 

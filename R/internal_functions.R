@@ -69,14 +69,14 @@ zoneMapping <- function(coinTossWinner,direction,squadId,period,zonePhysical) {
   squadEvenDirection = ifelse(squadOddDirection == 'Left','Right','Left')
   periodDirection    = ifelse(period %in% c(1,3,5), squadOddDirection, squadEvenDirection)
   
-  zone_logical = case_when(zonePhysical == 'LM'  & periodDirection == 'Left'  ~ 'AM',
+  zone_logical = case_when(zonePhysical == 'LM'  & periodDirection == 'Left'  ~ 'AM' ,
                            zonePhysical == 'L50' & periodDirection == 'Left'  ~ 'F50',
                            zonePhysical == 'R50' & periodDirection == 'Left'  ~ 'D50',
-                           zonePhysical == 'RM'  & periodDirection == 'Left'  ~ 'DM',
-                           zonePhysical == 'LM'  & periodDirection == 'Right' ~ 'DM',
+                           zonePhysical == 'RM'  & periodDirection == 'Left'  ~ 'DM' ,
+                           zonePhysical == 'LM'  & periodDirection == 'Right' ~ 'DM' ,
                            zonePhysical == 'L50' & periodDirection == 'Right' ~ 'D50',
                            zonePhysical == 'R50' & periodDirection == 'Right' ~ 'F50',
-                           zonePhysical == 'RM'  & periodDirection == 'Right' ~ 'AM',
+                           zonePhysical == 'RM'  & periodDirection == 'Right' ~ 'AM' ,
                            TRUE ~ zonePhysical)
   
   return(zone_logical)
@@ -87,9 +87,9 @@ zoneMapping <- function(coinTossWinner,direction,squadId,period,zonePhysical) {
 #'This function is used inside of getAFLClubTrxFeed() to either return a dataframe if the call passed to it is successful, or capture the error message thrown by the function call if unsuccessful. 
 #'@return a dataframe (of class "data.frame") or text string (of class "character")
 #'@keywords internal
-catchErrorMessage <- function(name, functionCall, matchId){
+catchErrorMessage <- function(name, functionCall, matchId, ...){
   tryCatch(
-    {eval(parse(text = paste0(functionCall,"(",matchId,")")))},
+    {do.call(functionCall, c(list(matchId), list(...)))}, # Done like this so we can still pass in '...' params like 'envir'
     
     message = function(m) {
       # Message printout
@@ -101,8 +101,14 @@ catchErrorMessage <- function(name, functionCall, matchId){
   )
 }
 
-
-
-
-
-
+#'isAFL 
+#'
+#'This function is used inside of getSquadSummaryFile() & getPlayerSummaryFile() to run a check on if the matchId passed in is an AFL mens match
+#'@return a dataframe (of class "data.frame") or text string (of class "character")
+#'@keywords internal
+isAFL <- function(leagueId){
+  if(leagueId != 1){
+    return(FALSE)
+  }
+  return(TRUE)
+}

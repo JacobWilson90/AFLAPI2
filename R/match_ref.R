@@ -28,10 +28,17 @@
 #'    \item \code{venue.name} The name of the match venue.
 #'    \item \code{venue.code} A short code to represent the match venue.
 #'    \item \code{venue.timezone} The timezone of the venue.
-#'    \item \code{status.id} A numerical identifier of the match's current status.
-#'    \item \code{status.name} The match's current status.
-#'    \item \code{status.type.id} A numerical identifier of the match status type.
-#'    \item \code{status.type.name} The match's current status type.
+#'    \item \code{match.status.period} The current period of the match (or last period of the match if match complete).
+#'    \item \code{match.status.period.secs} The elapsed seconds within the current period.
+#'    \item \code{match.status.period.display} A display format of the current period & period seconds (Eg.\code{"Q3 01:28"}).
+#'    \item \code{countdown.remaining.secs} The number of remaining seconds in the current period, counting down from 1200.
+#'    \item \code{countdown.remaining.time} The remaining time in the current period, formatted as minutes and seconds (Eg.\code{"04:24"})
+#'    \item \code{countdown.remaining.display} A display format of current period & remaining time (Eg.\code{"Q3 04:24"})
+#'    \item \code{match.status.code} A short code to represent the match's current status.
+#'    \item \code{match.status.name} The match's current status.
+#'    \item \code{match.status.id} A numerical identifier of the match's current status.
+#'    \item \code{match.status.type.id} A numerical identifier of the match status type.
+#'    \item \code{match.status.type.name} The match's current status type.
 #'    \item \code{home.goals} The number of goals kicked by the home squad.
 #'    \item \code{home.behinds} The number of behinds kicked by the home squad.
 #'    \item \code{home.points} The number of points scored by the home squad.
@@ -41,11 +48,10 @@
 #'    \item \code{winner.id} The squad ID of the winning team.
 #'    \item \code{result} A text description of the match result.
 #'    \item \code{result.code} A short text description of the match result.
-#'    
 #'    \item \code{coin.toss.winning.squad.id} The squad id of the squad who won the coin toss.
 #'    \item \code{coin.toss.direction.decision} The direction the squad who won the coin toss decided to kick to.
 #'    \item \code{attendance} The crowd attendance for the given match.
-
+#'    \item \code{statistic.update} The last UTC time that a statistic was last updated for a match.
 #'}
 #'@examples
 #'getMatch(216085122)
@@ -107,7 +113,7 @@ getMatch <- function(matchId,...){
 #'    \item \code{person.firstname} The person's first name.
 #'    \item \code{person.surname} The person's surname.
 #'    \item \code{person.display} The person's display name, represented as first initial and surname.
-#'    \item \code{jumper} The number worn on the person's uniform.
+#'    \item \code{jumper} The jumper number worn on the players's uniform.
 #'    \item \code{selected.id} A numerical identifier of the person's selected position.
 #'    \item \code{selected.name} The person's selected position.
 #'    \item \code{selected.code} A short code representing the peron's selected position.

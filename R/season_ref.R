@@ -336,6 +336,7 @@ getSquadPersons <- function(squad,seasonId,leagueId=1,levelId=1,...){
            firstname='players.firstname',
            surname='players.surname',
            name='players.fullname',
+           jumper.no='players.jumperNumber',
            display='players.displayName',
            position='players.position.name',
            DOB='players.dateOfBirth',

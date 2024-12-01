@@ -73,7 +73,7 @@ getChains <- function(matchId,...){
     if(is_empty(listResponse[[2]])) {
       returnData        <- data.frame(matrix(ncol = length(getChainsWhitelist), nrow = 0))
       names(returnData) <- getChainsWhitelist
-      message(paste0("\nWarning\n--> 0 rows of data in response.")) 
+      message(paste0("\nWarning:\n--> 0 rows of data in response.")) 
       return(returnData)
     } else {
       # Convert list into DF
@@ -220,7 +220,7 @@ getBench <- function(matchId,...){
 #'@export
 getShots <- function(matchId,...){
   
-  rawResponse <- cdAPIresponse(matchId,paste('matches',matchId,'shots',sep='/'),...)
+  rawResponse <- cdAPIresponse(endpoint = paste('matches',matchId,'shots',sep='/'),...)
   
   if(is.null(rawResponse)){
     return(rawResponse)
@@ -232,7 +232,7 @@ getShots <- function(matchId,...){
     if(is_empty(listResponse[[2]])) {
       returnData        <- data.frame(matrix(ncol = length(getShotsWhitelist), nrow = 0))
       names(returnData) <- getShotsWhitelist
-      message(paste0("\nWarning\n--> 0 rows of data in response.")) 
+      message(paste0("\nWarning:\n--> 0 rows of data in response.")) 
       return(returnData)
     } else {
       # Convert list into DF
@@ -263,6 +263,8 @@ getShots <- function(matchId,...){
 #'@param metric A text string of specific metric code(s) to be returned. This will result in the endpoint only returning these specific metrics. Note this endpoint is case sensitive and only works with metric codes (ie. \code{c("TACKLE", "GOAL")}
 #'@param team A (case-sensitive) text string of the team to return metrics for. Either \code{"home"} or \code{"away"}. Not passing anything to this param will return both teams.
 #'@param lastXseconds An integer that limits statistics to counting events that occurred in the last X number of seconds. (ie. \code{lastXSeconds = 300} will return the last 5 minutes)
+#'@param from Limits statistics to counting events that occurred on or after this number of seconds (ie. \code{from = 300} will return statistics that occured on or after the 300th second into the match)
+#'@param to Limits statistics to counting events that occurred on or before this number of seconds (ie. \code{to = 300} will return statistics that occured up to (and including) the 300th second into the match)
 #'@param ... Arguments to be passed to internal functions, such as \code{envir} or \code{version}.
 #'@return A data frame with a list of metrics for a match for each squad.
 #'\itemize{
@@ -279,9 +281,14 @@ getShots <- function(matchId,...){
 #'}
 #'@examples
 #'getSquadStats(216085122)
-#'getSquadStats(216085122,period=1,zone='D50')
+#'getSquadStats(216085122,period=1,zone='D50',from = 0, to = 300)
 #'@export
-getSquadStats <- function(matchId, period, zone, context, metric, team, lastXseconds, ...) {
+getSquadStats <- function(matchId, period, zone, context, metric, team, lastXseconds, from, to, ...) {
+  
+  if(!missing(lastXseconds) && (!missing(from) || !missing(to))) {
+    message(paste0("\nError:\n--> 'lastXseconds' parameter cannot be passed in to getSquadStats() alongside the 'from' or 'to' parameter(s)."))
+    return(NULL)
+  }
   
   # Build URL based on user inputs
   baseString   <- paste('matches', matchId, 'statistics/squads?', sep='/')                                               # Base URL
@@ -291,9 +298,11 @@ getSquadStats <- function(matchId, period, zone, context, metric, team, lastXsec
   metricString <- if (missing(metric))       NULL else paste(paste("metric=", metric, sep=''), collapse="&")             # Metrics
   teamString   <- if (missing(team))         NULL else paste("team=", tolower(team), sep='')                             # Team
   lastXstring  <- if (missing(lastXseconds)) NULL else paste(paste("lastXSeconds=", lastXseconds, sep=''), collapse="&") # lastXseconds 
+  fromString   <- if (missing(from))         NULL else paste(paste("fromPeriodSeconds=", from, sep=''), collapse="&")    # from 
+  toString     <- if (missing(to))           NULL else paste(paste("toPeriodSeconds=", to, sep=''), collapse="&")        # to 
   
   # Filter out NULL (non-supplied) inputs
-  paramsList <- Filter(Negate(is.null), list(periodString, zoneString, contextString, metricString, teamString, lastXstring))
+  paramsList <- Filter(Negate(is.null), list(periodString, zoneString, contextString, metricString, teamString, lastXstring, fromString, toString))
   
   # HIT API with valid & combined URL string
   rawResponse <- cdAPIresponse(endpoint = paste0(baseString, paste(paramsList, collapse="&")), ...)
@@ -313,7 +322,7 @@ getSquadStats <- function(matchId, period, zone, context, metric, team, lastXsec
     
     # Handle if no rows are present at the time of the call based on inputs
     if(nrow(returnData) == 0) {
-      message(paste0("\nWarning\n--> 0 rows of data for the parameters supplied.")) 
+      message(paste0("\nWarning:\n--> 0 rows of data for the parameters supplied.")) 
       
       # Add on the statistic-relevant columns that don't populate when there is zero data to be returned
       returnData[getSquadStatsMissingFields] <- lapply(getSquadStatsMissingFields, function(x) rep(NA, nrow(returnData)))
@@ -335,6 +344,8 @@ getSquadStats <- function(matchId, period, zone, context, metric, team, lastXsec
 #'@param metric A text string of specific metric code(s) to be returned. This will result in the endpoint only returning these specific metrics. Note this endpoint is case sensitive and only works with metric codes (ie. \code{c("TACKLE", "GOAL")}
 #'@param team A (case-sensitive) text string of the team to return metrics for. Either \code{"home"} or \code{"away"}. Not passing anything to this param will return both teams.
 #'@param lastXseconds An integer that limits statistics to counting events that occurred in the last X number of seconds. (ie. \code{lastXSeconds = 300} will return the last 5 minutes)
+#'@param from Limits statistics to counting events that occurred on or after this number of seconds (ie. \code{from = 300} will return statistics that occured on or after the 300th second into the match)
+#'@param to Limits statistics to counting events that occurred on or before this number of seconds (ie. \code{to = 300} will return statistics that occured up to (and including) the 300th second into the match)
 #'@param ... Arguments to be passed to internal functions, such as \code{envir} or \code{version}.
 #'@return A data frame with a list of metrics for a match for each player.
 #'\itemize{
@@ -354,9 +365,14 @@ getSquadStats <- function(matchId, period, zone, context, metric, team, lastXsec
 #'}
 #'@examples
 #'getPlayerStats(216085122)
-#'getPlayerStats(216085122,period=1,zone='D50')
+#'getPlayerStats(216085122,period=1,zone='D50',from = 0,to = 300)
 #'@export
-getPlayerStats <- function(matchId, period, zone, metric, team, lastXseconds, ...) {
+getPlayerStats <- function(matchId, period, zone, metric, team, lastXseconds, from, to, ...) {
+  
+  if(!missing(lastXseconds) && (!missing(from) || !missing(to))) {
+    message(paste0("\nError:\n--> 'lastXseconds' parameter cannot be passed in to getPlayerStats() alongside the 'from' or 'to' parameter(s)."))
+    return(NULL)
+  }
   
   # Build URL based on user inputs
   baseString   <- paste('matches', matchId, 'statistics/players?', sep='/')                                              # Base URL
@@ -365,9 +381,11 @@ getPlayerStats <- function(matchId, period, zone, metric, team, lastXseconds, ..
   zoneString   <- if (missing(zone))         NULL else paste(paste("zone=", zone, sep=''), collapse="&")                 # Zones
   teamString   <- if (missing(team))         NULL else paste("team=", tolower(team), sep='')                             # Team
   lastXstring  <- if (missing(lastXseconds)) NULL else paste(paste("lastXSeconds=", lastXseconds, sep=''), collapse="&") # lastXseconds 
+  fromString   <- if (missing(from))         NULL else paste(paste("fromPeriodSeconds=", from, sep=''), collapse="&")    # from 
+  toString     <- if (missing(to))           NULL else paste(paste("toPeriodSeconds=", to, sep=''), collapse="&")        # to 
   
   # Filter out NULL (non-supplied) inputs
-  paramsList <- Filter(Negate(is.null), list(periodString, zoneString, metricString, teamString, lastXstring))
+  paramsList <- Filter(Negate(is.null), list(periodString, zoneString, metricString, teamString, lastXstring, fromString, toString))
   
   # HIT API with valid & combined URL string
   rawResponse <- cdAPIresponse(endpoint = paste0(baseString, paste(paramsList, collapse="&")), ...)
@@ -395,7 +413,7 @@ getPlayerStats <- function(matchId, period, zone, metric, team, lastXseconds, ..
     
     # Handle if no rows are present at the time of the call based on inputs
     if(nrow(returnData) == 0) {
-      message(paste0("\nWarning\n--> 0 rows of data for the parameters supplied.")) 
+      message(paste0("\nWarning:\n--> 0 rows of data for the parameters supplied.")) 
       
       # Add on the statistic-relevant columns that don't populate when there is zero data to be returned
       returnData[getPlayerStatsMissingFields] <- lapply(getPlayerStatsMissingFields, function(x) rep(NA, nrow(returnData)))
@@ -408,7 +426,6 @@ getPlayerStats <- function(matchId, period, zone, metric, team, lastXseconds, ..
   return(returnData)
 }
 
-
 #'Match Stat Leaders
 #'
 #'Get leading five players for selected stats for a match.
@@ -420,9 +437,11 @@ getPlayerStats <- function(matchId, period, zone, metric, team, lastXseconds, ..
 #'    \item \code{code} The metric code (ALL_CAPS format).
 #'    \item \code{name} The metric name (singular).
 #'    \item \code{plural} The metric name (plural).
+#'    \item \code{id} A unique numerical identifier of a metric.
 #'    \item \code{player.id} A unique numerical identifier of the player.
 #'    \item \code{player.name} The full name of the player.
 #'    \item \code{player.display} The display name of the player, represented as first initial and surname.
+#'    \item \code{player.jumper.number} The jumper number worn on the players's uniform.
 #'    \item \code{squad.id} A unique numerical identifier of the squad.
 #'    \item \code{squad.name} The name of the squad.
 #'    \item \code{squad.code} A short code to represent the squad.
@@ -434,28 +453,40 @@ getPlayerStats <- function(matchId, period, zone, metric, team, lastXseconds, ..
 #'@examples
 #'getLeaders(216085122)
 #'@export
-getLeaders <- function(matchId,...){
-  temp <- cdAPI(paste('matches',matchId,'statistics/leaders',sep='/'),df=FALSE,...)
-  if(is.null(temp)) return(NULL)
-  r <- temp %>% content()
-  stats <- do.call(bind_rows,lapply(r$statistics,function(x){
-    details <- with(x,data.frame(code,name,namePlural,stringsAsFactors = FALSE))
-    players <- do.call(bind_rows,lapply(x$persons,function(y) {
-      if(!'valueDisplay'%in%names(y)) y <- c(y,'valueDisplay'=NA)
-      with(y,data.frame(personId,fullname,displayName,squadId,squadName,squadCode,value,valueDisplay,rank,order,stringsAsFactors=FALSE))
-    }))
-    data.frame(details,players,stringsAsFactors=FALSE)
-  }))
-  data.frame(match.id='matchId',stats) %>%
-    select(match.id,
-           code,name,plural='namePlural',
-           player.id='personId',
-           player.name='fullname',
-           player.display='displayName',
-           squad.id='squadId',
-           squad.name='squadName',
-           squad.code='squadCode',
-           value,display='valueDisplay',rank,order)
+getLeaders <- function(matchId,...){  
+  
+  # Hit API
+  rawResponse <- cdAPIresponse(matchId,paste('matches',matchId,'statistics/leaders',sep='/'),...)
+
+  if(is.null(rawResponse)){
+    return(rawResponse)
+  } else {
+    
+    # Convert response to flat list
+    listResponse <- fromJSON(content(rawResponse,'text'),flatten=TRUE)
+    
+    # Convert list into DF
+    returnData <- data.frame(listResponse)
+    
+    # Unnest the list col containing data
+    returnData <- returnData %>% 
+      tidyr::unnest("statistics.persons", names_sep = "_") 
+    
+    # Get vector of the missing fields (IF ANY) in the call info
+    missing <- setdiff(getLeadersWhitelist,names(returnData))
+    
+    # Add on any of the missing columns in the response 
+    returnData[missing] <- lapply(missing, function(x) rep(NA, nrow(returnData)))
+    
+    # Select exposed fields (getShotsExposedFields) & rename columns
+    returnData        <- returnData[, getLeadersExposedFields]
+    names(returnData) <- names(getLeadersExposedFields)
+    
+    # Set any NA instances of value display column to 0 
+    returnData$display[is.na(returnData$display)] <- 0
+    
+    return(returnData)
+  }
 }
 
 #'Period Scores
@@ -529,6 +560,7 @@ getPeriodScores <- function(matchId,cumulative=FALSE,...){
            winning.squad.id = if_else(cumulative,'winning.squad.cumulative','winning.squad.period'),
            cumulative)
 }
+
 
 #'Match Transactions
 #'
@@ -611,7 +643,7 @@ getMatchTransactions <- function(matchId,...){
     if(is_empty(listResponse[[1]])) {
       returnData        <- data.frame(matrix(ncol = length(getMatchTransactionsWhitelist), nrow = 0))
       names(returnData) <- getMatchTransactionsWhitelist
-      message(paste0("\nWarning\n--> 0 rows of data in response.")) 
+      message(paste0("\nWarning:\n--> 0 rows of data in response.")) 
       return(returnData)
       
       # Normal response, play on    
@@ -759,7 +791,7 @@ getEntries <- function(matchId,...){
     if(is_empty(listResponse[[2]])) {
       returnData        <- data.frame(matrix(ncol = length(getEntriesWhitelist), nrow = 0))
       names(returnData) <- getEntriesWhitelist
-      message(paste0("\nWarning\n--> 0 rows of data in response.")) 
+      message(paste0("\nWarning:\n--> 0 rows of data in response.")) 
       return(returnData)
     } else {
       # Convert list into DF
@@ -815,7 +847,7 @@ getSquadStatsPOST <- function(matchId, payload, info = FALSE, verbose = F, ...){
   if(sub("MetricRequests", "", names(payload)) == "squad"){
     fieldsToCheck <- c("metricCodes", "team", "periods", "zones")
   } else {
-    message("Incorrect payload passed to function\n--> Have you provided a PLAYER payload to the SQUAD function?")
+    message("Incorrect payload passed to function:\n--> Have you provided a PLAYER payload to the SQUAD function?")
     return()
   } 
   
@@ -843,7 +875,7 @@ getSquadStatsPOST <- function(matchId, payload, info = FALSE, verbose = F, ...){
     if(nrow(returnData) == 0) {
       returnData        <- data.frame(matrix(ncol = length(getSquadStatsPOSTExposedFields), nrow = 0))
       names(returnData) <- getSquadStatsPOSTExposedFields
-      if(verbose) message(paste0("\nWarning\n--> 0 rows of data for the payload supplied.")) 
+      if(verbose) message(paste0("\nWarning:\n--> 0 rows of data for the payload supplied.")) 
       return()
     } else {
       returnData        <- returnData[, getSquadStatsPOSTExposedFields]
@@ -921,7 +953,7 @@ getPlayerStatsPOST <- function(matchId, payload, info = FALSE, verbose = FALSE, 
   if(sub("MetricRequests", "", names(payload)) == "player"){
     fieldsToCheck <- c("metricCodes", "team", "periods", "zones")
   } else {
-    message("Incorrect payload passed to function\n--> Have you provided a SQUAD payload to the PLAYER function?")
+    message("Incorrect payload passed to function:\n--> Have you provided a SQUAD payload to the PLAYER function?")
     return()
   } 
   
@@ -957,7 +989,7 @@ getPlayerStatsPOST <- function(matchId, payload, info = FALSE, verbose = FALSE, 
     if(nrow(returnData) == 0) {
       returnData        <- data.frame(matrix(ncol = length(getPlayerStatsPOSTExposedFields), nrow = 0))
       names(returnData) <- getPlayerStatsPOSTExposedFields
-      if(verbose) message(paste0("\nWarning\n--> 0 rows of data for the payload supplied.")) 
+      if(verbose) message(paste0("\nWarning:\n--> 0 rows of data for the payload supplied.")) 
       return()
     } else {
       returnData        <- returnData[, getPlayerStatsPOSTExposedFields]
@@ -997,4 +1029,655 @@ getPlayerStatsPOST <- function(matchId, payload, info = FALSE, verbose = FALSE, 
     return(returnData)
   } 
 }
+
+#'AFL Club Feed Transaction File
+#'
+#'Get the AFL Club Trx Feed file formerly available via the support site.
+#'@param matchId A unique numerical identifier of a match.
+#'@param ... Arguments to be passed to internal functions, such as \code{envir} or \code{version}.
+#'@return A data frame in the same format and structure as the AFL Club Transaction Feed file formerly available via the support site.
+#' \itemize{
+#'    \item \code{MATCH_ID} A unique numerical identifier of a match.
+#'    \item \code{MATCH_DATE}The calendar date of a match in local time.
+#'    \item \code{MATCH_TIME} The local start time of a match.
+#'    \item \code{SEASON_ID} A numerical identifier of a season.
+#'    \item \code{GROUP_ROUND_NO} The round number of the match. Continues to count up during finals.
+#'    \item \code{VENUE_NAME} The name of the match venue.
+#'    \item \code{HOME_SQUAD} The name of the home squad.
+#'    \item \code{HOME_SCORE} The score of the home squad.
+#'    \item \code{AWAY_SQUAD} The name of the away squad.
+#'    \item \code{AWAY_SCORE} The score of the away squad.
+#'    \item \code{MATCH_TRX_ID} A unique numerical identifier for a given transaction, used for ordering chronologically.
+#'    \item \code{SEQUENCE} Unique identifier of events within a single transaction. Used for multi-player transactions.
+#'    \item \code{PERIOD} The period (quarter) of the match.
+#'    \item \code{PERIOD_SECS} The elapsed time in seconds for live periods, or the period length for completed periods.
+#'    \item \code{STATISTIC_CODE} The statistic code for a given transaction.
+#'    \item \code{PERSON_ID} A unique numerical identifier for the player assigned to the transaction (if applicable).
+#'    \item \code{FULLNAME} The fullname of the player assigned to the transaction (if applicable).
+#'    \item \code{SQUAD_NAME} The name of the squad assigned to the transaction.
+#'    \item \code{OPP_SQUAD} The opposing squad to the one assigned to the transaction.
+#'    \item \code{AR_ID} Away Ruck PERSON_ID (if applicable).
+#'    \item \code{AR} Away Ruck FULLNAME (if applicable).
+#'    \item \code{H1_ID} Home Midfielder 1 PERSON_ID (if applicable).
+#'    \item \code{H1} Home Midfielder 1 FULLNAME (if applicable).
+#'    \item \code{H2_ID} Home Midfielder 2 PERSON_ID (if applicable).
+#'    \item \code{H2} Home Midfielder 2 FULLNAME (if applicable).
+#'    \item \code{H3_ID} Home Midfielder 3 PERSON_ID (if applicable).
+#'    \item \code{H3} Home Midfielder 3 FULLNAME (if applicable).
+#'    \item \code{A1_ID} Away Midfielder 1 PERSON_ID (if applicable).
+#'    \item \code{A1} Away Midfielder 1 FULLNAME (if applicable).
+#'    \item \code{A2_ID} Away Midfielder 2 PERSON_ID (if applicable).
+#'    \item \code{A2} Away Midfielder 2 FULLNAME (if applicable).
+#'    \item \code{A3_ID} Away Midfielder 3 FULLNAME (if applicable).
+#'    \item \code{A3} Away Midfielder 3 FULLNAME (if applicable).
+#'    \item \code{ZONE_LOGICAL_AFL} The zone in which the transaction takes place, relative to the squad in possession.
+#'    \item \code{ZONE_PHYSICAL_AFL} The zone in which the transaction takes place, relative to the physical ground.
+#'    \item \code{TRUEX} The x coordinate of the transaction.
+#'    \item \code{TRUEY} The y coordinate of the transaction.
+#'    \item \code{VENUE_LENGTH} The length of the venue in metres.
+#'    \item \code{VENUE_WIDTH} The width of the venue in metres.
+#'    \item \code{STDX} The x coordinate of the transaction transformed to a standard ground dimension (160x141).
+#'    \item \code{STDY} The y coordinate of the transaction transformed to a standard ground dimension (160x141).
+#'    \item \code{XY_FLIP}
+#'    \item \code{INITIAL_TRX_ID} The transaction ID of the start of the chain.
+#'    \item \code{FINAL_TRX_ID} The transaction ID of the end of the chain.
+#'    \item \code{CHAIN_SQUAD} The name of the squad in possession during the chain.
+#'    \item \code{INITIAL_STATE} The starting state of the chain.
+#'    \item \code{FINAL_STATE} The final state of the chain.
+#'    \item \code{ZONE_LOGICAL_INITIAL} The zone in which the first transaction of the chain takes place, relative to the squad in possession.
+#'    \item \code{FINAL_ZONE_LOGICAL} The zone in which the final transaction of the chain takes place, relative to the squad in possession.
+#'    \item \code{LAUNCH_PERSON_ID} A unique numerical identifier of the player who launched the chain.
+#'    \item \code{LAUNCH_PLAYER} The full name of the player who launched the chain.
+#'    \item \code{GUILTY_PERSON_ID} Turnover player PERSON_ID (if applicable).
+#'    \item \code{GUILTY_PLAYER} Turnover player FULLNAME (if applicable).
+#'    \item \code{PARAM1} Additional captured parameters on transactions, showing the Shot Source, Free Kick Reason, Inside 50 Side or Kick In Direction
+#'    \item \code{PARAM2} Additional captured parameters on transactions, showing the Shot Type, Free Kick Context or Inside 50 Type
+#'    \item \code{PARAM3} Additional captured parameters on transactions, showing the Shot Angle
+#'    \item \code{PARAM4} Additional captured parameters on transactions, showing the Shot Distance
+#'    \item \code{KICK_FOOT} On kicking transactions, the foot of the kicking player.
+#'    \item \code{KICK_INTENT} On kicking transactions, the intent of the kicking player.
+#'    \item \code{KICK_DISTANCE} On kicking transactions, a description of the kicks distance.
+#'    \item \code{KICK_DIRECTION} On kicking transactions, a description of the kicks direction.
+#'    \item \code{PRESSURE_LEVEL} The name of the type of pressure applied (ie. Set Position).
+#'    \item \code{PRESSURE_PLAYER_ID} A unique numerical identifier for the first pressure player.
+#'    \item \code{PRESSURE_PLAYER} The fullname of the first pressure player.
+#'    \item \code{PRESSURE_PLAYER2_ID} A unique numerical identifier for the second pressure player.
+#'    \item \code{PRESSURE_PLAYER2} The fullname of the second pressure player.
+#'    \item \code{PRESSURE_POINTS} The points value of the type of pressure applied.
+#'}
+#'@examples
+#'getAFLClubTrxFeed(matchId = 120390401)
+#'@export
+getAFLClubTrxFeed <- function(matchId,...) {
+  
+  # Transactions
+  basetrx      <- catchErrorMessage("Transactions Data", "getMatchTransactions", matchId, ...)
+  # Chains
+  chains       <- catchErrorMessage("Chains Data", "getChains", matchId, ...)
+  # Match metadata
+  matchDetails <- catchErrorMessage("Match Metadata", "getMatch", matchId, ...)
+  # Venue metadata
+  venueDetails <- catchErrorMessage("Venue Metadata", "getVenue", matchId, ...)
+  
+  # Put objects from required calls above into list
+  objectList <- list("Transactions"=basetrx,"Chains"=chains,"Match Details"=matchDetails,"Venue Details"=venueDetails)
+  
+  # If any of the attempts to fetch data throw errors, print errors and escape 
+  if(any(sapply(objectList,is.character))){
+    message(paste0("Error building transaction file:\n",paste("-->",unlist(objectList[sapply(objectList,is.character)]),collapse="\n")))
+    return(NULL)
+  } else {
+    
+    # Home/Away Names & ID's - Placed here because we know all fetches from data are valid
+    homeSquad  <-matchDetails$home.name
+    awaySquad  <-matchDetails$away.name
+    homeSquadId<-matchDetails$home.id
+    awaySquadId<-matchDetails$away.id
+    
+    # Assign initial stoppage transactions to the home squad, and for ball ups and throw ins, assign the logical zone for each squad based on the physical zone of the stoppage
+    # Remove hitout and shark transactions as they are better represented by their derived transactions
+    basetrx <- basetrx %>%
+      mutate(squad.name   = ifelse(stat.code %in% c('CEBO','THIN','BUTU','CETU'),homeSquad,squad.name),
+             squad.id     = ifelse(stat.code %in% c('CEBO','THIN','BUTU','CETU'),homeSquadId,squad.id),
+             zone.logical = ifelse(stat.code %in% c('THIN','BUTU'),zoneMapping(matchDetails$coin.toss.winning.squad.id, matchDetails$coin.toss.direction.decision, squad.id,period,zone.physical),zone.logical)) %>% # For all stoppages, assign the home squad to the transaction
+      filter(!stat.code %in% c('HITOUT','SHARK'))                                                                                                                                                                    # Filter out hitouts as they are not present in the trxFiles
+    
+    # Get chains for the match, rename columns according the columns in the trxFile
+    chains        <- chains[,getTRXfile_chainsFields]
+    names(chains) <- names(getTRXfile_chainsFields)
+    
+    # Create a duplicate stoppage transaction with the away squad assigned to match business logic in trxFile
+    stoppages <- basetrx %>%
+      filter(stat.code %in% c('CEBO','THIN','BUTU','CETU')) %>%
+      mutate(squad.name = awaySquad,
+             squad.id = awaySquadId,
+             zone.logical = ifelse(stat.code %in% c('THIN','BUTU'), zoneMapping(matchDetails$coin.toss.winning.squad.id, matchDetails$coin.toss.direction.decision, squad.id,period,zone.physical),zone.logical))
+    
+    # Create trxFile transactions and add 'sequence', which gives additional identifier to those transactions that have multiple players on it.
+    enhancedtrx <- basetrx %>%
+      rbind(stoppages) %>%
+      group_by(trx.id, squad.id) %>%
+      mutate(sequence1 = row_number()) %>%
+      arrange(trx.id, sequence1) %>%
+      group_by(trx.id) %>%
+      mutate(sequence = row_number()) %>%
+      arrange(trx.id, sequence)
+    
+    # Filter out the ruck transactions and assess if any have only one ruckman assigned (should have both)
+    twoplayerstatsbase <- enhancedtrx %>%
+      filter(stat.code %in% c('CBVS','TIVS','BUVS')) %>%
+      group_by(match.id,trx.id) %>%
+      mutate(count = n(),
+             home_squad_n = length(squad.name[squad.name == homeSquad]),
+             away_squad_n = length(squad.name[squad.name == awaySquad]),
+             sequence = ifelse(count==1 & home_squad_n ==0,2,ifelse(count==1 & away_squad_n == 0, 1,sequence))
+      )
+    
+    # Dataset of 'dummy' rows which will contain the rows to be added in cases where there is only one ruckman present in a ruck transaction ('CBVS','TIVS','BUVS')
+    dummytwoplayerstats <- twoplayerstatsbase  %>%
+      filter(count==1) %>%
+      mutate(sequence = ifelse(count==1 & home_squad_n ==0,1,ifelse(count==1 & away_squad_n == 0, 2,sequence)),
+             person.id = NA,
+             person.fullname = NA)
+    
+    # If twoplayerstatsbase is empty ('CBVS','TIVS','BUVS' arent present) create an empty dataframe with the same names AND(!) class types
+    if(nrow(twoplayerstatsbase)==0){
+      twoplayerstats <- twoplayerstats_empty
+      
+      # If there has been cases of ruck contests with only one ruckman, bind on df (dummytwoplayerstats) containing dummy rows for the ruckman not present
+    }else if(nrow(dummytwoplayerstats)!=0){
+      twoplayerstats<-twoplayerstatsbase %>%
+        rbind(dummytwoplayerstats) %>%
+        arrange(trx.id, sequence) %>%
+        select(match.id,trx.id,stat.code, sequence, person.fullname, person.id) %>%
+        pivot_wider(names_from = sequence, values_from = c(person.id, person.fullname))
+      # Handle normally
+    } else {
+      twoplayerstats<-twoplayerstatsbase %>%
+        arrange(trx.id, sequence) %>%
+        select(match.id,trx.id,stat.code, sequence, person.fullname, person.id) %>%
+        pivot_wider(names_from = sequence, values_from = c(person.id, person.fullname))
+    }
+    
+    # Reorder and rename the columns
+    twoplayerstats        <- twoplayerstats[,getTRXfile_twoPlayerStats]
+    names(twoplayerstats) <- names(getTRXfile_twoPlayerStats)
+    
+    #For transactions that end the chain without another chain, change the transaction id to allow the final transaction to be included in the chain
+    #data manipulation to bring all seperated parameters into the same columns (PARAM)
+    #logic to assign certain transactions and chains to the CB zone
+    returnData <- matchDetails %>%
+      left_join(enhancedtrx   , by = 'match.id') %>%
+      left_join(twoplayerstats, by = c('match.id','trx.id','stat.code','person.id')) %>%
+      left_join(venueDetails  , by = 'match.id') %>%
+      mutate(join_trx = ifelse(stat.code %in% c('OOBO','BUCA','BEHI','GOAL','PEREN','RUSH','FRAG','OOFUK'),trx.id-1, trx.id)) %>%
+      left_join(chains, join_by(trx.id >= INITIAL_TRX_ID,  join_trx<FINAL_TRX_ID, match.id == match.id)) %>%
+      mutate(opp.squad.name       = ifelse(squad.name == homeSquad,awaySquad,homeSquad),
+             PARAM1               = ifelse(!is.na(inside50.direction),inside50.direction,ifelse(!is.na(shot.source), shot.source,ifelse(!is.na(kickin.direction),kickin.direction,freekick.reason))),  # Business logic for PARAM1 in returnData
+             PARAM1               = ifelse(stat.code %in% c('KISE','KIBI','KICL','KIIN','KILO','KISH','KIKIN','KIEF') & PARAM1 == 'Centre','Corridor',PARAM1),
+             PARAM2               = ifelse(!is.na(inside50.intent),inside50.intent,ifelse(!is.na(shot.type), shot.type,freekick.context)),                                                             # Business logic for PARAM2 in trxFile
+             PARAM3               = shot.angle,
+             PARAM4               = shot.distance,
+             XY_FLIP              = ifelse(coin.toss.winning.squad.id == homeSquadId,1,-1) * ifelse(is.na(coin.toss.winning.squad.id),1,-1) * ifelse(period %in% c(1,3,5),1,-1),
+             match.date           = format(as.Date(match.date), "%d-%b-%y"),
+             zone.logical         = ifelse(stat.code %in% c('CBCL','CBFP','CBHAD','CBHO','CBHSK','CEBO','CETU','CBHSD'), 'CB',ifelse(is.na(zone.logical),'U',zone.logical)),                           # For centre bounce type transations, assign to 'CB' zone
+             INITIAL_STATE        = ifelse(INITIAL_STATE == 'INT','PG',INITIAL_STATE), ##change name of INT to PG to match trxFile
+             ZONE_LOGICAL_INITIAL = ifelse(INITIAL_STATE == 'CB' & is.na(ZONE_LOGICAL_INITIAL),'CB',ZONE_LOGICAL_INITIAL),
+             zone.physical        = ifelse(stat.code %in% c('MTCHI','PERST','PEREN','MTCHE'), 'M',zone.physical),
+             pressure.name        = ifelse(pressure.name == 'Set Position','Set',ifelse(pressure.name == 'No Pressure','None',pressure.name)),                                                         # Change name to match trxFile
+             FINAL_STATE          = ifelse(FINAL_STATE == 'RB','RUSH',FINAL_STATE)
+      ) %>%
+      arrange()
+    
+    # Filter down TRX file fields & apply renaming
+    returnData        <- returnData[,getTRXfileExposedFields]
+    names(returnData) <- names(getTRXfileExposedFields)
+    
+    # Param Mapping
+    returnData$PARAM1 <- PARAM1_mapping[returnData$PARAM1]
+    returnData$PARAM2 <- PARAM2_mapping[returnData$PARAM2]
+    returnData$PARAM3 <- PARAM3_mapping[returnData$PARAM3]
+    returnData$PARAM4 <- PARAM4_mapping[returnData$PARAM4]
+    
+    # return
+    return(returnData)
+  }
+}
+
+#'AFL Squad Summary File
+#'
+#'Get the AFL Squad Summary File formerly available via the support site.
+#'@param matchId A unique numerical identifier of a match.
+#'@param ... Arguments to be passed to internal functions, such as \code{envir} or \code{version}.
+#'@return A data frame in the same format and structure as the AFL Squad Summary File formerly available via the support site.
+#' \itemize{
+#'    \item \code{MATCH_ID} A unique numerical identifier of a match.
+#'    \item \code{SEASON_ID} A numerical identifier of a season.
+#'    \item \code{GROUP_ROUND_NO} The round number of the match. Continues to count up during finals.
+#'    \item \code{VENUE_NAME} The name of the match venue.
+#'    \item \code{SQUAD_NAME} The name of the squad for the given row.
+#'    \item \code{OPP_SQUAD_NAME} The name of the opposition squad for the given row.
+#'    \item \code{SQUAD_MARGIN} The final margin of the match in relation to the team listed under SQUAD_NAME.
+#'    \item \code{MARGIN} The margin at the end of the given period in relation to the team listed under SQUAD_NAME.
+#'    \item \code{ZONE_LOGICAL_AFL} The zone in which the values within metrics that follow are belonging to, relative to the squad listed under SQUAD_NAME.
+#'}
+#'@examples
+#'getSquadSummaryFile(matchId = 120390401)
+#'@export
+getSquadSummaryFile <- function(matchId,...) {
+  
+  # Hitting API for metadata
+  rawResponse       <- cdAPIresponse(endpoint = paste('matches',matchId,sep='/'),...)
+  listResponse      <- fromJSON(content(rawResponse,'text'),flatten=TRUE)
+  matchDetails      <- as.data.frame(cbind(listResponse,listResponse$periods))[,matchDetailsCols]
+  matchPeriodScores <- cdAFLAPI::getPeriodScores(matchId)[,c("period","home.id","away.id","home.margin","away.margin")]
+  
+  # AFL Mens Check
+  if(!isAFL(matchDetails$leagueId[1])) {
+    message("Error:\n--> The matchId passed to getSquadSummaryFile() is not an AFL Mens match.")
+    return(NULL)
+  }
+  
+  # List of periods to iterate over
+  maxPeriod        <- if(max(matchDetails$period)>4) max(matchDetails$period) else max(matchDetails$period); 
+  matchPeriodsList <- as.list(1:maxPeriod) 
+  
+  # Not sure this is efficient but see how the below are being used
+  Squads  <- data.frame("SQUAD_ID" = c(matchDetails$home.id[1], matchDetails$away.id[1]))
+  periods <- data.frame("PERIOD"   = c(1:maxPeriod))
+  zones   <- data.frame("ZONE_LOGICAL_AFL"= c('D50','DM','AM','F50','X')) 
+  
+  # Remove and instantiate inside package - rename as player/squad versions
+  zonedMetricStrings         <- paste("list(", paste0('"',zonedMetrics_PlatformNames_Squad,'"', collapse = ','),")")
+  zonelessMetricStrings      <- paste("list(", paste0('"',zonelessMetrics_PlatformNames_Squad,'"',  collapse = ','),")")
+  zonelessMetricOtherStrings <- paste("list(", paste0('"',zonelessMetricsOther_PlatformNames_Squad,'"',  collapse = ','),")")
+  
+  # Use lapply to build a payload for each quarter as defined by matchPeriodList
+  squadSummaryFilePayload <- lapply(matchPeriodsList, function(period) {
+    payload <- list(
+      squadMetricRequests = list(
+        list(
+          metricCodes = eval(parse(text=zonedMetricStrings)),
+          team = NA,
+          periods = list(period),
+          zones = list("D50") , 
+          id = "D50"
+        ),
+        list(
+          metricCodes = eval(parse(text=zonedMetricStrings)),
+          team = NA,
+          periods = list(period),
+          zones = list("DM") , 
+          id = "DM"
+        ),
+        list(
+          metricCodes = eval(parse(text=zonedMetricStrings)),
+          team = NA,
+          periods = list(period),
+          zones = list("AM"),
+          id = "AM"
+        ),
+        list(
+          metricCodes = eval(parse(text=zonedMetricStrings)),
+          team = NA,
+          periods = list(period),
+          zones = list("F50"),
+          id = "F50"
+        ),
+        list(
+          metricCodes = eval(parse(text=zonelessMetricStrings)),   ####metrics in X zone with no zone filter on this part of the call
+          team = NA,
+          periods = list(period),    # zoneless and ones that exist in both
+          zones = NA,
+          id="X"
+        ),
+        list(
+          metricCodes = eval(parse(text=zonelessMetricOtherStrings)),  #### getting time in possession opposition
+          team = NA,
+          periods = list(period),
+          context = "Against",
+          zones = NA,
+          id="Against"
+        ),
+        list(
+          metricCodes = eval(parse(text=zonelessMetricOtherStrings)), #### getting time in possession diff
+          team = NA,
+          periods = list(period),
+          context = "Diff",
+          zones = NA,
+          id="Diff"
+        )
+      )
+    )
+  })
+  
+  # Use post endpoint function to hit 
+  apiSquadSummaryFile <- do.call(rbind, lapply(unlist(matchPeriodsList), function(x) {
+    as.data.frame(cdAFLAPI::getSquadStatsPOST(matchId = matchId, payload = squadSummaryFilePayload[[x]], info = TRUE))
+  }))[c("squad.id", "info.periods", "id", "stat.code", "value")]
+  
+  # Create a 'PERIOD_LENGTH' metric, for each squad each period (this takes the same format as other metrics in the summary file but itsnt itself a metric)
+  periodLength <- tidyr::expand_grid("squad.id" = Squads[[1]],matchDetails[,c("period","periodSecs")],"id"="X","stat.code"="PERIOD_LENGTH")
+  names(periodLength)[names(periodLength) == "period"] <- "info.periods"
+  names(periodLength)[names(periodLength) == "periodSecs"]   <- "value"
+  periodLength <- periodLength[c("squad.id", "info.periods", "id", "stat.code", "value")]
+  
+  # Bind the Metrics from the API to the PERIOD_LENGTH df we've made a metric
+  apiSquadSummaryFile              <- rbind(apiSquadSummaryFile, periodLength)
+  apiSquadSummaryFile$info.periods <- as.numeric(apiSquadSummaryFile$info.periods)
+  
+  # Change Time In Possession names
+  apiSquadSummaryFile$stat.code[which(apiSquadSummaryFile$stat.code == 'TIME_IN_POSSESSION' & apiSquadSummaryFile$id == 'Against')] <- "TIME_IN_POSS_OPP_SQUAD"
+  apiSquadSummaryFile$stat.code[which(apiSquadSummaryFile$stat.code == 'TIME_IN_POSSESSION' & apiSquadSummaryFile$id == 'Diff')]    <- "TIME_IN_POSS_DIFF"
+  
+  # 
+  apiSquadSummaryFile$id[which(apiSquadSummaryFile$id %in% c('Diff','Against'))] <- "X"
+  
+  ####create a empty dataframe that is: all SF metrics wide, by zones, by periods
+  empty <- tidyr::expand_grid(squadSummaryFile_lookup, periods, zones, Squads)
+  empty$PLATFORM_METRIC_CODE[which(empty$SF_METRIC_CODE == 'TIME_IN_POSS_OPP_SQUAD')] <- "TIME_IN_POSS_OPP_SQUAD"
+  empty$PLATFORM_METRIC_CODE[which(empty$SF_METRIC_CODE == 'TIME_IN_POSS_DIFF')]      <- "TIME_IN_POSS_DIFF"
+  
+  # Turn from long to wide
+  # Logic in here gets all the metrics that exist in both the X zone and in other zones and grabs:
+  # - the response without a zone filter and then subtracts each of the zone responses of the same metric to get the metrics assigned to the 'M' zone
+  
+  ###join api response to empty data frame, joining by metric, zone, period and squad
+  returnData <- empty %>%
+    left_join(apiSquadSummaryFile,
+              by = c("PLATFORM_METRIC_CODE" = "stat.code",
+                     "ZONE_LOGICAL_AFL"     = "id",
+                     "PERIOD"               = "info.periods",
+                     "SQUAD_ID"             = "squad.id")) 
+  
+  # Make NA's 0 here before pivoting
+  returnData$value[is.na(returnData$value)] <- 0
+  
+  # Round specific groups of metrics to either 0 or 1 decimal place 
+  returnData$value<- ifelse(returnData$PLATFORM_METRIC_CODE %in% squadSummaryFile_roundedMetrics1DP,round(returnData$value,1),returnData$value)
+  returnData$value<- ifelse(returnData$PLATFORM_METRIC_CODE %in% squadSummaryFile_roundedMetrics0DP,round(returnData$value,0),returnData$value)
+  
+  # Do arithmetic
+  returnData <- returnData %>% 
+    select(-PLATFORM_METRIC_CODE)%>%
+    pivot_wider(names_from = SF_METRIC_CODE, values_from = value) %>%
+    group_by(PERIOD, SQUAD_ID) %>%
+    mutate(
+      CHAIN_METRES_ALL_ZONE              = sum(CHAIN_METRES[ZONE_LOGICAL_AFL != 'X']),
+      CHAIN_METRES_NET_ALL_ZONE          = sum(CHAIN_METRES_NET[ZONE_LOGICAL_AFL != 'X']),
+      CHAIN_METRES_NET_ST_ALL_ZONE       = sum(CHAIN_METRES_NET_ST[ZONE_LOGICAL_AFL != 'X']),
+      CHAIN_METRES_REPLY_ALL_ZONE        = sum(CHAIN_METRES_REPLY[ZONE_LOGICAL_AFL != 'X']),
+      CHAIN_METRES_REPLY_ST_ALL_ZONE     = sum(CHAIN_METRES_REPLY_ST[ZONE_LOGICAL_AFL != 'X']),
+      CHAIN_METRES_ST_ALL_ZONE           = sum(CHAIN_METRES_ST[ZONE_LOGICAL_AFL != 'X']),
+      FIRST_POSSESSION_TO_CLEAR_ALL_ZONE = sum(FIRST_POSSESSION_TO_CLEAR[ZONE_LOGICAL_AFL != 'X']),
+      FIRST_POSSESSION_ALL_ZONE          = sum(FIRST_POSSESSION[ZONE_LOGICAL_AFL != 'X']),
+      CLEARANCE_ALL_ZONE                 = sum(CLEARANCE[ZONE_LOGICAL_AFL != 'X']),
+      STOPPAGE_ALL_ZONE                  = sum(STOPPAGE[ZONE_LOGICAL_AFL != 'X']),
+      HITOUT_ALL_ZONE                    = sum(HITOUT[ZONE_LOGICAL_AFL != 'X']),
+      HIT_OUT_SHARKED_ALL_ZONE           = sum(HIT_OUT_SHARKED[ZONE_LOGICAL_AFL != 'X']),
+      HIT_OUT_SHARK_ALL_ZONE             = sum(HIT_OUT_SHARK[ZONE_LOGICAL_AFL != 'X']),
+      HIT_OUT_TO_ADVANTAGE_ALL_ZONE      = sum(HIT_OUT_TO_ADVANTAGE[ZONE_LOGICAL_AFL != 'X']),
+      ST_SCORE_LAUNCH_ALL_ZONE           = sum(ST_SCORE_LAUNCH[ZONE_LOGICAL_AFL != 'X']),
+      ST_BEHIND_LAUNCH_ALL_ZONE          = sum(ST_BEHIND_LAUNCH[ZONE_LOGICAL_AFL != 'X']),
+      ST_GOAL_LAUNCH_ALL_ZONE            = sum(ST_GOAL_LAUNCH[ZONE_LOGICAL_AFL != 'X']),
+      RATING_HITOUTS_ALL_ZONE            = sum(RATING_HITOUTS[ZONE_LOGICAL_AFL != 'X']),
+      RANKING_PTS_ALL_ZONE               = sum(RANKING_PTS[ZONE_LOGICAL_AFL != 'X']),
+      ###
+      CHAIN_METRES                       = ifelse(ZONE_LOGICAL_AFL == 'X', CHAIN_METRES - CHAIN_METRES_ALL_ZONE, CHAIN_METRES),
+      CHAIN_METRES_NET                   = ifelse(ZONE_LOGICAL_AFL == 'X', CHAIN_METRES_NET - CHAIN_METRES_NET_ALL_ZONE, CHAIN_METRES_NET),
+      CHAIN_METRES_NET_ST                = ifelse(ZONE_LOGICAL_AFL == 'X', CHAIN_METRES_NET_ST - CHAIN_METRES_NET_ST_ALL_ZONE, CHAIN_METRES_NET_ST),
+      CHAIN_METRES_REPLY                 = ifelse(ZONE_LOGICAL_AFL == 'X', CHAIN_METRES_REPLY - CHAIN_METRES_REPLY_ALL_ZONE, CHAIN_METRES_REPLY),
+      CHAIN_METRES_REPLY_ST              = ifelse(ZONE_LOGICAL_AFL == 'X', CHAIN_METRES_REPLY_ST - CHAIN_METRES_REPLY_ST_ALL_ZONE, CHAIN_METRES_REPLY_ST),
+      CHAIN_METRES_ST                    = ifelse(ZONE_LOGICAL_AFL == 'X', CHAIN_METRES_ST - CHAIN_METRES_ST_ALL_ZONE, CHAIN_METRES_ST),
+      FIRST_POSSESSION_TO_CLEAR          = ifelse(ZONE_LOGICAL_AFL == 'X', FIRST_POSSESSION_TO_CLEAR - FIRST_POSSESSION_TO_CLEAR_ALL_ZONE, FIRST_POSSESSION_TO_CLEAR),
+      FIRST_POSSESSION                   = ifelse(ZONE_LOGICAL_AFL == 'X', FIRST_POSSESSION - FIRST_POSSESSION_ALL_ZONE, FIRST_POSSESSION),
+      CLEARANCE                          = ifelse(ZONE_LOGICAL_AFL == 'X', CLEARANCE - CLEARANCE_ALL_ZONE, CLEARANCE),
+      STOPPAGE                           = ifelse(ZONE_LOGICAL_AFL == 'X', STOPPAGE - STOPPAGE_ALL_ZONE, STOPPAGE),
+      HITOUT                             = ifelse(ZONE_LOGICAL_AFL == 'X', HITOUT - HITOUT_ALL_ZONE, HITOUT),
+      HIT_OUT_SHARKED                    = ifelse(ZONE_LOGICAL_AFL == 'X', HIT_OUT_SHARKED - HIT_OUT_SHARKED_ALL_ZONE, HIT_OUT_SHARKED),
+      HIT_OUT_SHARK                      = ifelse(ZONE_LOGICAL_AFL == 'X', HIT_OUT_SHARK - HIT_OUT_SHARK_ALL_ZONE, HIT_OUT_SHARK),
+      HIT_OUT_TO_ADVANTAGE               = ifelse(ZONE_LOGICAL_AFL == 'X', HIT_OUT_TO_ADVANTAGE - HIT_OUT_TO_ADVANTAGE_ALL_ZONE, HIT_OUT_TO_ADVANTAGE),
+      ST_SCORE_LAUNCH                    = ifelse(ZONE_LOGICAL_AFL == 'X', ST_SCORE_LAUNCH - ST_SCORE_LAUNCH_ALL_ZONE, ST_SCORE_LAUNCH),
+      ST_BEHIND_LAUNCH                   = ifelse(ZONE_LOGICAL_AFL == 'X', ST_BEHIND_LAUNCH - ST_BEHIND_LAUNCH_ALL_ZONE, ST_BEHIND_LAUNCH),
+      ST_GOAL_LAUNCH                     = ifelse(ZONE_LOGICAL_AFL == 'X', ST_GOAL_LAUNCH - ST_GOAL_LAUNCH_ALL_ZONE, ST_GOAL_LAUNCH),
+      RATING_HITOUTS                     = ifelse(ZONE_LOGICAL_AFL == 'X', RATING_HITOUTS - RATING_HITOUTS_ALL_ZONE, RATING_HITOUTS),
+      RANKING_PTS                        = ifelse(ZONE_LOGICAL_AFL == 'X', RANKING_PTS - RANKING_PTS_ALL_ZONE, RANKING_PTS)
+      ###
+    )  %>%
+    group_by(PERIOD, SQUAD_ID, ZONE_LOGICAL_AFL) %>%
+    mutate( INTERCEPT_OTHER              = INTERCEPT_OTHER + INTERCEPT_OTHER_KO) %>%
+    select(-INTERCEPT_OTHER_KO) # this should not be required - double check (will be removed in line 222)
+  
+  
+  # Feature engineering
+  returnData$MATCH_ID       <- matchDetails$id[1]
+  returnData$SEASON_ID      <- matchDetails$seasonId[1]
+  returnData$GROUP_ROUND_NO <- matchDetails$roundNumber[1]
+  returnData$VENUE_NAME     <- matchDetails$venue.name[1]
+  returnData$SQUAD_NAME     <- NA
+  returnData$SQUAD_NAME[which(returnData$SQUAD_ID == matchDetails$home.id[1])] <- matchDetails$home.name[1]
+  returnData$SQUAD_NAME[which(returnData$SQUAD_ID != matchDetails$home.id[1])] <- matchDetails$away.name[1]
+  returnData$OPP_SQUAD_NAME <- NA
+  returnData$OPP_SQUAD_NAME[which(returnData$SQUAD_ID == matchDetails$home.id[1])] <- matchDetails$away.name[1]
+  returnData$OPP_SQUAD_NAME[which(returnData$SQUAD_ID != matchDetails$home.id[1])] <- matchDetails$home.name[1]
+  returnData$SQUAD_MARGIN   <- NA
+  returnData$SQUAD_MARGIN[which(returnData$SQUAD_ID == matchDetails$home.id[1])] <- matchDetails$home.score.points[1]-matchDetails$away.score.points[1]
+  returnData$SQUAD_MARGIN[which(returnData$SQUAD_ID != matchDetails$home.id[1])] <- matchDetails$away.score.points[1]-matchDetails$home.score.points[1]
+  
+  # Add home & away margins to get quarter-level margin for each squad [dplyr intentionally over baseR here]
+  returnData <- returnData %>%
+    left_join(., matchPeriodScores[c(1,2,4)], by = c("SQUAD_ID"="home.id","PERIOD"="period")) %>%
+    left_join(., matchPeriodScores[c(1,3,5)], by = c("SQUAD_ID"="away.id","PERIOD"="period")) %>%
+    mutate(MARGIN = coalesce(home.margin, away.margin)) %>%
+    relocate(MARGIN, .after = "PERIOD")
+  
+  # Apply column filtering/ordering (will naturally remove '_ALL_ZONE' cols from above)
+  returnData        <- returnData[, getSquadSummaryFileExposedFields]
+  
+  # Convert 'zone' to an ordered factor
+  returnData$ZONE_LOGICAL_AFL <- factor(returnData$ZONE_LOGICAL_AFL , levels = c("D50", "DM", "AM", "F50", "X"))
+  
+  # Order by 'squad.name', 'period' then 'zone'
+  returnData$SQUAD_NAME <- factor(returnData$SQUAD_NAME, levels = c(matchDetails$home.name[1], matchDetails$away.name[1]))
+  returnData            <- returnData[order(returnData$SQUAD_NAME, returnData$PERIOD, returnData$ZONE_LOGICAL_AFL ), ]
+  
+  # Output
+  return(returnData)
+  
+}
+
+#'AFL Player Summary File
+#'
+#'Get the AFL Player Summary File formerly available via the support site.
+#'@param matchId A unique numerical identifier of a match.
+#'@param ... Arguments to be passed to internal functions, such as \code{envir} or \code{version}.
+#'@return A data frame in the same format and structure as the AFL Club Transaction Feed file formerly available via the support site.
+#' \itemize{
+#'    \item \code{MATCH_ID} A unique numerical identifier of a match.
+#'    \item \code{SEASON_ID} A numerical identifier of a season.
+#'    \item \code{GROUP_ROUND_NO} The round number of the match. Continues to count up during finals.
+#'    \item \code{VENUE_NAME} The name of the match venue.
+#'    \item \code{PERSON_ID} A unique numerical identifier for the player assigned to the given row.
+#'    \item \code{FULLNAME} The fullname of the player assigned to the given row.
+#'    \item \code{SQUAD_NAME} The name of the squad for the given row.
+#'    \item \code{OPP_SQUAD_NAME} The name of the opposition squad for the given row.
+#'    \item \code{SQUAD_MARGIN} The final margin of the match in relation to the team listed under SQUAD_NAME.
+#'    \item \code{MARGIN} The margin at the end of the given period in relation to the team listed under SQUAD_NAME.
+#'    \item \code{ZONE_LOGICAL_AFL} The zone in which the values within metrics that follow are belonging to, relative to the squad listed under SQUAD_NAME.
+#'}
+#'@examples
+#'getPlayerSummaryFile(matchId = 120390401)
+#'@export
+getPlayerSummaryFile <- function(matchId,...) {
+  
+  # Hitting API for metadata
+  rawResponse       <- cdAPIresponse(endpoint = paste('matches',matchId,sep='/'),...)
+
+  listResponse      <- fromJSON(content(rawResponse,'text'),flatten=TRUE)
+  matchDetails      <- as.data.frame(cbind(listResponse,listResponse$periods))[,matchDetailsCols]
+  matchPeriodScores <- cdAFLAPI::getPeriodScores(matchId)[,c("period","home.id","away.id","home.margin","away.margin")]
+  
+  # AFL Mens Check
+  if(!isAFL(matchDetails$leagueId[1])) {
+    message("Error:\n--> The matchId passed to getPlayerSummaryFile() is not an AFL Mens match.")
+    return(NULL)
+  }
+  
+  # List of periods to iterate over
+  maxPeriod        <- if(max(matchDetails$period)>4) max(matchDetails$period) else max(matchDetails$period); 
+  matchPeriodsList <- as.list(1:maxPeriod) 
+  
+  # Not sure this is efficient but see how the below are being used
+  Squads  <- data.frame("SQUAD_ID" = c(matchDetails$home.id[1], matchDetails$away.id[1]))
+  periods <- data.frame("PERIOD"   = c(1:maxPeriod))
+  zones   <- data.frame("ZONE_LOGICAL_AFL"= c('D50','DM','AM','F50','X')) 
+  players <- getMatchPersons(matchId) %>%
+    select(PERSON_ID = 'person.id',FULLNAME = 'person.name', SQUAD_ID= 'squad.id', person.surname) %>%
+    mutate(PERSON_ID = as.numeric(PERSON_ID))
+  
+  # Remove and instantiate inside package - rename as player/squad versions
+  zonedMetricStrings         <- paste("list(", paste0('"',zonedMetrics_PlatformNames_Player,'"', collapse = ','),")")
+  zonelessMetricStrings      <- paste("list(", paste0('"',zonelessMetrics_PlatformNames_Player,'"',  collapse = ','),")")
+  
+  # Use lapply to build a payload for each quarter as defined by matchPeriodList
+  playerSummaryFilePayload <- lapply(matchPeriodsList, function(period) {
+    payload <- list(
+      playerMetricRequests = list(
+        list(
+          metricCodes = eval(parse(text=zonedMetricStrings)),
+          team = NA,
+          periods = list(period),
+          zones = list("D50") , 
+          id = "D50"
+        ),
+        list(
+          metricCodes = eval(parse(text=zonedMetricStrings)),
+          team = NA,
+          periods = list(period),
+          zones = list("DM") , 
+          id = "DM"
+        ),
+        list(
+          metricCodes = eval(parse(text=zonedMetricStrings)),
+          team = NA,
+          periods = list(period),
+          zones = list("AM"),
+          id = "AM"
+        ),
+        list(
+          metricCodes = eval(parse(text=zonedMetricStrings)),
+          team = NA,
+          periods = list(period),
+          zones = list("F50"),
+          id = "F50"
+        ),
+        list(
+          metricCodes = eval(parse(text=zonelessMetricStrings)),   ####metrics in X zone with no zone filter on this part of the call
+          team = NA,
+          periods = list(period),    # zoneless and ones that exist in both
+          zones = NA,
+          id="X"
+        )
+      )
+    )
+  })
+  
+  # Use post endpoint function to hit 
+  apiPlayerSummaryFile <- do.call(rbind, lapply(unlist(matchPeriodsList), function(x) {
+    as.data.frame(cdAFLAPI::getPlayerStatsPOST(matchId = matchId, payload = playerSummaryFilePayload[[x]], info = TRUE))
+  }))[,c("match.id","squad.name","squad.code","squad.id","player.name","player.display","player.id","stat.code","stat.name","value","info.periods","id")]
+  
+  # Make info.periods numeric
+  apiPlayerSummaryFile$info.periods <- as.numeric(apiPlayerSummaryFile$info.periods)
+  
+  ####create a empty dataframe that is: all SF metrics wide, by zones, by periods
+  empty <- tidyr::expand_grid(playerSummaryFile_lookup, periods, zones, players)
+  
+  # Turn from long to wide
+  # Logic in here gets all the metrics that exist in both the X zone and in other zones and grabs:
+  ### the response without a zone filter and then subtracts each of the zone responses of the same metric to get the metrics assigned to the 'M' zone
+  
+  ###join api response to empty data frame, joining by metric, zone, period and squad
+  returnData <- empty %>%
+    left_join(apiPlayerSummaryFile,
+              by = c("PLATFORM_METRIC_CODE" = "stat.code",
+                     "ZONE_LOGICAL_AFL"     = "id",
+                     "PERIOD"               = "info.periods",
+                     "PERSON_ID"            = "player.id",
+                     "SQUAD_ID"             = "squad.id"
+              )) 
+  
+  # Make NA's 0 here before pivoting
+  returnData$value[is.na(returnData$value)] <- 0
+  returnData$value<- ifelse(returnData$PLATFORM_METRIC_CODE %in% playerSummaryFile_roundedMetrics1DP,round(returnData$value,1),returnData$value)
+  returnData$value<- ifelse(returnData$PLATFORM_METRIC_CODE %in% playerSummaryFile_roundedMetrics0DP,round(returnData$value,0),returnData$value)
+  
+  # Pivot to wide & calculate additional metrics
+  returnData <- returnData %>% 
+    select(-PLATFORM_METRIC_CODE, - match.id, - squad.name, - squad.code, -player.name, -player.display, -stat.name) %>%
+    pivot_wider(names_from = SF_METRIC_CODE, values_from = value) %>%
+    group_by(PERIOD, SQUAD_ID, PERSON_ID) %>%
+    mutate(
+      FIRST_POSSESSION_ALL_ZONE          = sum(FIRST_POSSESSION[ZONE_LOGICAL_AFL != 'X']),
+      CLEARANCE_ALL_ZONE                 = sum(CLEARANCE[ZONE_LOGICAL_AFL!= 'X']),
+      HITOUT_ALL_ZONE                    = sum(HITOUT[ZONE_LOGICAL_AFL != 'X']),
+      HIT_OUT_SHARKED_ALL_ZONE           = sum(HIT_OUT_SHARKED[ZONE_LOGICAL_AFL != 'X']),
+      HIT_OUT_SHARK_ALL_ZONE             = sum(HIT_OUT_SHARK[ZONE_LOGICAL_AFL != 'X']),
+      HIT_OUT_TO_ADVANTAGE_ALL_ZONE      = sum(HIT_OUT_TO_ADVANTAGE[ZONE_LOGICAL_AFL != 'X']),
+      RATING_HITOUTS_ALL_ZONE            = sum(RATING_HITOUTS[ZONE_LOGICAL_AFL != 'X']),
+      RANKING_PTS_ALL_ZONE               = sum(RANKING_PTS[ZONE_LOGICAL_AFL != 'X']),
+      ###
+      FIRST_POSSESSION                   = ifelse(ZONE_LOGICAL_AFL == 'X', FIRST_POSSESSION  - FIRST_POSSESSION_ALL_ZONE, FIRST_POSSESSION ),
+      CLEARANCE                          = ifelse(ZONE_LOGICAL_AFL == 'X', CLEARANCE - CLEARANCE_ALL_ZONE, CLEARANCE),
+      HITOUT                             = ifelse(ZONE_LOGICAL_AFL == 'X', HITOUT - HITOUT_ALL_ZONE, HITOUT),
+      HIT_OUT_SHARKED                    = ifelse(ZONE_LOGICAL_AFL == 'X', HIT_OUT_SHARKED - HIT_OUT_SHARKED_ALL_ZONE, HIT_OUT_SHARKED),
+      HIT_OUT_SHARK                      = ifelse(ZONE_LOGICAL_AFL == 'X', HIT_OUT_SHARK - HIT_OUT_SHARK_ALL_ZONE, HIT_OUT_SHARK),
+      HIT_OUT_TO_ADVANTAGE               = ifelse(ZONE_LOGICAL_AFL == 'X', HIT_OUT_TO_ADVANTAGE - HIT_OUT_TO_ADVANTAGE_ALL_ZONE, HIT_OUT_TO_ADVANTAGE),
+      RATING_HITOUTS                     = ifelse(ZONE_LOGICAL_AFL == 'X', RATING_HITOUTS - RATING_HITOUTS_ALL_ZONE , RATING_HITOUTS),
+      RANKING_PTS                        = ifelse(ZONE_LOGICAL_AFL == 'X', RANKING_PTS - RANKING_PTS_ALL_ZONE , RANKING_PTS)
+      
+    ) %>%
+    group_by(PERIOD, SQUAD_ID, ZONE_LOGICAL_AFL) %>%
+    mutate(
+      INTERCEPT_OTHER                    = INTERCEPT_OTHER + INTERCEPT_OTHER_KO
+    )
+  
+  # Feature engineering
+  returnData$MATCH_ID       <- matchDetails$id[1]
+  returnData$SEASON_ID      <- matchDetails$seasonId[1]
+  returnData$GROUP_ROUND_NO <- matchDetails$roundNumber[1]
+  returnData$VENUE_NAME     <- matchDetails$venue.name[1]
+  returnData$SQUAD_NAME     <- NA
+  returnData$SQUAD_NAME[which(returnData$SQUAD_ID == matchDetails$home.id[1])] <- matchDetails$home.name[1]
+  returnData$SQUAD_NAME[which(returnData$SQUAD_ID != matchDetails$home.id[1])] <- matchDetails$away.name[1]
+  returnData$OPP_SQUAD_NAME <- NA
+  returnData$OPP_SQUAD_NAME[which(returnData$SQUAD_ID == matchDetails$home.id[1])] <- matchDetails$away.name[1]
+  returnData$OPP_SQUAD_NAME[which(returnData$SQUAD_ID != matchDetails$home.id[1])] <- matchDetails$home.name[1]
+  returnData$SQUAD_MARGIN   <- NA
+  returnData$SQUAD_MARGIN[which(returnData$SQUAD_ID == matchDetails$home.id[1])] <- matchDetails$home.score.points[1]-matchDetails$away.score.points[1]
+  returnData$SQUAD_MARGIN[which(returnData$SQUAD_ID != matchDetails$home.id[1])] <- matchDetails$away.score.points[1]-matchDetails$home.score.points[1]
+  returnData$ZONE_LOGICAL_AFL <- factor(returnData$ZONE_LOGICAL_AFL, levels = c("D50", "DM", "AM", "F50", "X"))
+  
+  # Add home & away margins to get quarter-level margin for each squad [dplyr intentionally over baseR here]
+  returnData <- returnData %>%
+    left_join(., matchPeriodScores[c("period","home.id","home.margin")], by = c("SQUAD_ID"="home.id","PERIOD"="period")) %>%
+    left_join(., matchPeriodScores[c("period","away.id","away.margin")], by = c("SQUAD_ID"="away.id","PERIOD"="period")) %>%
+    left_join(., matchDetails[c("period","periodSecs")], by = c("PERIOD"="period")) %>%
+    mutate(MARGIN          = coalesce(home.margin, away.margin),
+           TOG_PERIOD_SECS = ifelse(ZONE_LOGICAL_AFL == 'X',periodSecs,0)) %>%
+    relocate(MARGIN, .after = "PERIOD") %>%
+    arrange(SQUAD_NAME, person.surname, FULLNAME, PERIOD, ZONE_LOGICAL_AFL)
+  
+  # Apply column filtering/ordering (will naturally remove '_ALL_ZONE' cols from above)
+  returnData        <- returnData[, getPlayerSummaryFileExposedFields]
+  
+  # Output
+  return(returnData)
+}
+
+
+
+
+
+
 
