@@ -5,7 +5,7 @@
 \alias{getChainsExposedFields}
 \title{getChainsExposedFields}
 \format{
-An object of class \code{character} of length 50.
+An object of class \code{character} of length 51.
 }
 \usage{
 getChainsExposedFields

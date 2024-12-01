@@ -5,7 +5,7 @@
 \alias{getChainsWhitelist}
 \title{getChainsWhitelist}
 \format{
-An object of class \code{character} of length 53.
+An object of class \code{character} of length 54.
 }
 \usage{
 getChainsWhitelist

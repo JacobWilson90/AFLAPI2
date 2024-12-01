@@ -9,7 +9,8 @@ cdAPIresponse(
   endpoint,
   envir = c("", "sandbox", "dev"),
   base_url = "https://api.afl.championdata.io",
-  version = "v1"
+  version = "v1",
+  verbose = F
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ cdAPIresponse(
 \item{base_url}{The base URL for the API. Defaults to the AFL API.}
 
 \item{version}{The version number of the API. Defaults to 1.}
+
+\item{verbose}{Logical, default is \code{FALSE}. If \code{TRUE}, prints the full URL string passed to the API.}
 }
 \value{
 A response object.

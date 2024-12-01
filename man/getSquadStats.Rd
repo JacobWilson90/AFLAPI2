@@ -4,7 +4,18 @@
 \alias{getSquadStats}
 \title{Match Squad Stats}
 \usage{
-getSquadStats(matchId, period, zone, context, metric, team, lastXseconds, ...)
+getSquadStats(
+  matchId,
+  period,
+  zone,
+  context,
+  metric,
+  team,
+  lastXseconds,
+  from,
+  to,
+  ...
+)
 }
 \arguments{
 \item{matchId}{A unique numerical identifier of a match.}
@@ -20,6 +31,10 @@ getSquadStats(matchId, period, zone, context, metric, team, lastXseconds, ...)
 \item{team}{A (case-sensitive) text string of the team to return metrics for. Either \code{"home"} or \code{"away"}. Not passing anything to this param will return both teams.}
 
 \item{lastXseconds}{An integer that limits statistics to counting events that occurred in the last X number of seconds. (ie. \code{lastXSeconds = 300} will return the last 5 minutes)}
+
+\item{from}{Limits statistics to counting events that occurred on or after this number of seconds (ie. \code{from = 300} will return statistics that occured on or after the 300th second into the match)}
+
+\item{to}{Limits statistics to counting events that occurred on or before this number of seconds (ie. \code{to = 300} will return statistics that occured up to (and including) the 300th second into the match)}
 
 \item{...}{Arguments to be passed to internal functions, such as \code{envir} or \code{version}.}
 }
@@ -43,5 +58,5 @@ Get squad stats for a match. Only returns observed metrics.
 }
 \examples{
 getSquadStats(216085122)
-getSquadStats(216085122,period=1,zone='D50')
+getSquadStats(216085122,period=1,zone='D50',from = 0, to = 300)
 }

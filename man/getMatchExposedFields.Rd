@@ -5,7 +5,7 @@
 \alias{getMatchExposedFields}
 \title{getMatchExposedFields}
 \format{
-An object of class \code{character} of length 39.
+An object of class \code{character} of length 47.
 }
 \usage{
 getMatchExposedFields

@@ -5,7 +5,7 @@
 \alias{getMatchWhitelist}
 \title{getMatchWhitelist}
 \format{
-An object of class \code{character} of length 39.
+An object of class \code{character} of length 48.
 }
 \usage{
 getMatchWhitelist
