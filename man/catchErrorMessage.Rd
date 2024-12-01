@@ -4,7 +4,7 @@
 \alias{catchErrorMessage}
 \title{catchErrorMessage}
 \usage{
-catchErrorMessage(name, functionCall, matchId)
+catchErrorMessage(name, functionCall, matchId, ...)
 }
 \value{
 a dataframe (of class "data.frame") or text string (of class "character")

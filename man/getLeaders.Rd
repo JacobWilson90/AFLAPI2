@@ -18,9 +18,11 @@ A data frame with a list of the five leading players for selected metrics.
    \item \code{code} The metric code (ALL_CAPS format).
    \item \code{name} The metric name (singular).
    \item \code{plural} The metric name (plural).
+   \item \code{id} A unique numerical identifier of a metric.
    \item \code{player.id} A unique numerical identifier of the player.
    \item \code{player.name} The full name of the player.
    \item \code{player.display} The display name of the player, represented as first initial and surname.
+   \item \code{player.jumper.number} The jumper number worn on the players's uniform.
    \item \code{squad.id} A unique numerical identifier of the squad.
    \item \code{squad.name} The name of the squad.
    \item \code{squad.code} A short code to represent the squad.

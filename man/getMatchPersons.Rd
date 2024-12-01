@@ -25,7 +25,7 @@ A data frame with a list of persons for a match, with one row per person.
    \item \code{person.firstname} The person's first name.
    \item \code{person.surname} The person's surname.
    \item \code{person.display} The person's display name, represented as first initial and surname.
-   \item \code{jumper} The number worn on the person's uniform.
+   \item \code{jumper} The jumper number worn on the players's uniform.
    \item \code{selected.id} A numerical identifier of the person's selected position.
    \item \code{selected.name} The person's selected position.
    \item \code{selected.code} A short code representing the peron's selected position.
