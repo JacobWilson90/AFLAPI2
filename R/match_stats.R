@@ -1270,7 +1270,7 @@ getSquadSummaryFile <- function(matchId,...) {
   rawResponse       <- cdAPIresponse(endpoint = paste('matches',matchId,sep='/'),...)
   listResponse      <- fromJSON(content(rawResponse,'text'),flatten=TRUE)
   matchDetails      <- as.data.frame(cbind(listResponse,listResponse$periods))[,matchDetailsCols]
-  matchPeriodScores <- cdAFLAPI::getPeriodScores(matchId)[,c("period","home.id","away.id","home.margin","away.margin")]
+  matchPeriodScores <- getPeriodScores(matchId)[,c("period","home.id","away.id","home.margin","away.margin")]
   
   # AFL Mens Check
   if(!isAFL(matchDetails$leagueId[1])) {
@@ -1353,7 +1353,7 @@ getSquadSummaryFile <- function(matchId,...) {
   
   # Use post endpoint function to hit 
   apiSquadSummaryFile <- do.call(rbind, lapply(unlist(matchPeriodsList), function(x) {
-    as.data.frame(cdAFLAPI::getSquadStatsPOST(matchId = matchId, payload = squadSummaryFilePayload[[x]], info = TRUE))
+    as.data.frame(getSquadStatsPOST(matchId = matchId, payload = squadSummaryFilePayload[[x]], info = TRUE))
   }))[c("squad.id", "info.periods", "id", "stat.code", "value")]
   
   # Create a 'PERIOD_LENGTH' metric, for each squad each period (this takes the same format as other metrics in the summary file but itsnt itself a metric)
@@ -1515,7 +1515,7 @@ getPlayerSummaryFile <- function(matchId,...) {
 
   listResponse      <- fromJSON(content(rawResponse,'text'),flatten=TRUE)
   matchDetails      <- as.data.frame(cbind(listResponse,listResponse$periods))[,matchDetailsCols]
-  matchPeriodScores <- cdAFLAPI::getPeriodScores(matchId)[,c("period","home.id","away.id","home.margin","away.margin")]
+  matchPeriodScores <- getPeriodScores(matchId)[,c("period","home.id","away.id","home.margin","away.margin")]
   
   # AFL Mens Check
   if(!isAFL(matchDetails$leagueId[1])) {
@@ -1584,7 +1584,7 @@ getPlayerSummaryFile <- function(matchId,...) {
   
   # Use post endpoint function to hit 
   apiPlayerSummaryFile <- do.call(rbind, lapply(unlist(matchPeriodsList), function(x) {
-    as.data.frame(cdAFLAPI::getPlayerStatsPOST(matchId = matchId, payload = playerSummaryFilePayload[[x]], info = TRUE))
+    as.data.frame(getPlayerStatsPOST(matchId = matchId, payload = playerSummaryFilePayload[[x]], info = TRUE))
   }))[,c("match.id","squad.name","squad.code","squad.id","player.name","player.display","player.id","stat.code","stat.name","value","info.periods","id")]
   
   # Make info.periods numeric
@@ -1675,9 +1675,181 @@ getPlayerSummaryFile <- function(matchId,...) {
   return(returnData)
 }
 
-
-
-
+#'Match Stoppages
+#'
+#'Get a dataframe of stoppages for a match.
+#'@param matchId A unique numerical identifier of a match.
+#'@param stoppageAttendees A logical value indicating whether to include the attendees of the stoppage. Default is \code{FALSE}.
+#'@param ... Arguments to be passed to internal functions, such as \code{envir} or \code{version}.
+#'@return A data frame with all of the stoppages for a given match. 
+#' \itemize{
+#'   \item \code{match.id} A unique numerical identifier for a match.
+#'   \item \code{type.name} The name of the stoppage type (ie. 'Centre Bounce').
+#'   \item \code{type.code} A short code representing the stoppage type.
+#'   \item \code{trx.id} A unique numerical identifier for a transaction.
+#'   \item \code{period} The period in which the transaction occurred.
+#'   \item \code{period.seconds} The elapsed time (in seconds) within the period of the transaction.
+#'   \item \code{stoppage.location.x} The x-coordinate of the stoppage on the field.
+#'   \item \code{stoppage.location.y} The y-coordinate of the stoppage on the field.
+#'   \item \code{stoppage.location.standard.x} The x-coordinate of the stoppage transformed to standard dimensions.
+#'   \item \code{stoppage.location.standard.y} The y-coordinate of the stoppage transformed to standard dimensions.
+#'   \item \code{hitout.id} The transaction id for the hit-out at the stoppage.
+#'   \item \code{hitout.name} The name of the hit-out type.
+#'   \item \code{hitout.code} A short code representing the hit-out type.
+#'   \item \code{hitout.period.seconds} The elapsed time (in seconds) within the period of the hit-out.
+#'   \item \code{hitout.player.displayname} The display name of the player credited with the hit-out.
+#'   \item \code{hitout.player.fullname} The full name of the player credited with the hit-out.
+#'   \item \code{hitout.player.id} A unique numerical identifier for the player credited with the hit-out.
+#'   \item \code{hitout.player.squad.id} A unique numerical identifier for the squad of the player credited with the hit-out.
+#'   \item \code{first.possession.id} The transaction id for the first possession after the stoppage.
+#'   \item \code{first.possession.name} The name of the first possession type.
+#'   \item \code{first.possession.code} A short code representing the first possession type.
+#'   \item \code{first.possession.period.seconds} The elapsed time (in seconds) within the period of the first possession.
+#'   \item \code{first.possession.zone} The zone where the first possession occurred.
+#'   \item \code{first.possession.player.displayname} The display name of the player gaining the first possession.
+#'   \item \code{first.possession.player.fullname} The full name of the player gaining the first possession.
+#'   \item \code{first.possession.player.id} A unique numerical identifier for the player gaining the first possession.
+#'   \item \code{first.possession.player.squad.id} A unique numerical identifier for the squad of the player gaining the first possession.
+#'   \item \code{clearance.id} A unique numerical identifier for the clearance.
+#'   \item \code{clearance.name} The name of the clearance type.
+#'   \item \code{clearance.code} A short code representing the clearance type.
+#'   \item \code{clearance.period.seconds} The elapsed time (in seconds) within the period of the clearance.
+#'   \item \code{clearance.zone} The zone where the clearance occurred.
+#'   \item \code{clearance.player.displayname} The display name of the player performing the clearance.
+#'   \item \code{clearance.player.fullname} The full name of the player performing the clearance.
+#'   \item \code{clearance.player.id} A unique numerical identifier for the player performing the clearance.
+#'   \item \code{clearance.player.squad.id} A unique numerical identifier for the squad of the player performing the clearance.
+#'   \item \code{exit.id} A unique numerical identifier for the stoppage exit.
+#'   \item \code{exit.name} The name of the stoppage exit type.
+#'   \item \code{exit.code} A short code representing the stoppage exit type.
+#'   \item \code{exit.period.seconds} The elapsed time (in seconds) within the period of the stoppage exit.
+#'   \item \code{exit.zone} The zone where the stoppage exit occurred.
+#'   \item \code{exit.type} The type of stoppage exit (e.g., kick, handball).
+#'   \item \code{exit.pressure} The level of defensive pressure applied during the stoppage exit.
+#'   \item \code{exit.player.displayname} The display name of the player performing the stoppage exit.
+#'   \item \code{exit.player.fullname} The full name of the player performing the stoppage exit.
+#'   \item \code{exit.player.id} A unique numerical identifier for the player performing the stoppage exit.
+#'   \item \code{exit.player.squad.id} A unique numerical identifier for the squad of the player performing the stoppage exit.
+#'   \item \code{exit.kicking.foot} The foot used by the player for the stoppage exit kick.
+#'   \item \code{exit.kicking.intent} The intent of the player for the stoppage exit kick.
+#'   \item \code{exit.kicking.distance} The distance of the stoppage exit kick.
+#'   \item \code{exit.kicking.direction} The direction of the stoppage exit kick.
+#'   \item \code{exit.location.x} The x-coordinate of the stoppage exit on the field.
+#'   \item \code{exit.location.y} The y-coordinate of the stoppage exit on the field.
+#'   \item \code{exit.location.x.std} The x-coordinate of the stoppage exit transformed to standard dimensions.
+#'   \item \code{exit.location.y.std} The y-coordinate of the stoppage exit transformed to standard dimensions.
+#'   \item \code{stoppage.attendance.name} The name of the stoppage being attended (ie. 'Ball Up Ruck Contest')
+#'   \item \code{stoppage.attendance.code} A short code representing the type of stoppage being attended.
+#'   \item \code{stoppage.attendance.id} The transaction id that the stoppage attendance is associated to.
+#'   \item \code{stoppage.attendance.period.seconds} The elapsed time (in seconds) within the period of the particular stoppage attendance.
+#'   \item \code{stoppage.attendance.home.fullname1} when \code{stoppageAttendees = TRUE}: The full name of the first player attending the stoppage for the home squad.
+#'   \item \code{stoppage.attendance.home.displayname1} when \code{stoppageAttendees = TRUE}: The display name of the first player attending the stoppage for the home squad.
+#'   \item \code{stoppage.attendance.home.personId1} when \code{stoppageAttendees = TRUE}: A unique numerical identifier for the first player attending the stoppage for the home squad.
+#'   \item \code{stoppage.attendance.home.fullname2} when \code{stoppageAttendees = TRUE}: The full name of the second player attending the stoppage for the home squad.
+#'   \item \code{stoppage.attendance.home.displayname2} when \code{stoppageAttendees = TRUE}: The display name of the second player attending the stoppage for the home squad.
+#'   \item \code{stoppage.attendance.home.personId2} when \code{stoppageAttendees = TRUE}: A unique numerical identifier for the second player attending the stoppage for the home squad.
+#'   \item \code{stoppage.attendance.home.fullname3} when \code{stoppageAttendees = TRUE}: The full name of the third player attending the stoppage for the home squad.
+#'   \item \code{stoppage.attendance.home.displayname3} when \code{stoppageAttendees = TRUE}: The display name of the third player attending the stoppage for the home squad.
+#'   \item \code{stoppage.attendance.home.personId3} when \code{stoppageAttendees = TRUE}: A unique numerical identifier for the third player attending the stoppage for the home squad.
+#'   \item \code{stoppage.attendance.home.fullname4} when \code{stoppageAttendees = TRUE}: The full name of the fourth player attending the stoppage for the home squad.
+#'   \item \code{stoppage.attendance.home.displayname4} when \code{stoppageAttendees = TRUE}: The display name of the fourth player attending the stoppage for the home squad.
+#'   \item \code{stoppage.attendance.home.personId4} when \code{stoppageAttendees = TRUE}: A unique numerical identifier for the fourth player attending the stoppage for the home squad.
+#'   \item \code{stoppage.attendance.away.fullname1} when \code{stoppageAttendees = TRUE}: The full name of the first player attending the stoppage for the away squad.
+#'   \item \code{stoppage.attendance.away.displayname1} when \code{stoppageAttendees = TRUE}: The display name of the first player attending the stoppage for the away squad.
+#'   \item \code{stoppage.attendance.away.personId1} when \code{stoppageAttendees = TRUE}: A unique numerical identifier for the first player attending the stoppage for the away squad.
+#'   \item \code{stoppage.attendance.away.fullname2} when \code{stoppageAttendees = TRUE}: The full name of the second player attending the stoppage for the away squad.
+#'   \item \code{stoppage.attendance.away.displayname2} when \code{stoppageAttendees = TRUE}: The display name of the second player attending the stoppage for the away squad.
+#'   \item \code{stoppage.attendance.away.personId2} when \code{stoppageAttendees = TRUE}: A unique numerical identifier for the second player attending the stoppage for the away squad.
+#'   \item \code{stoppage.attendance.away.fullname3} when \code{stoppageAttendees = TRUE}: The full name of the third player attending the stoppage for the away squad.
+#'   \item \code{stoppage.attendance.away.displayname3} when \code{stoppageAttendees = TRUE}: The display name of the third player attending the stoppage for the away squad.
+#'   \item \code{stoppage.attendance.away.personId3} when \code{stoppageAttendees = TRUE}: A unique numerical identifier for the third player attending the stoppage for the away squad.
+#'   \item \code{stoppage.attendance.away.fullname4} when \code{stoppageAttendees = TRUE}: The full name of the fourth player attending the stoppage for the away squad.
+#'   \item \code{stoppage.attendance.away.displayname4} when \code{stoppageAttendees = TRUE}: The display name of the fourth player attending the stoppage for the away squad.
+#'   \item \code{stoppage.attendance.away.personId4} when \code{stoppageAttendees = TRUE}: A unique numerical identifier for the fourth player attending the stoppage for the away squad.
+#' }
+#'@examples
+#'getStoppages(matchId = 120390401)
+#'@export
+getStoppages <- function(matchId, stoppageAttendees=FALSE,...){
+  
+  # Hit stoppage endpoint for response
+  rawResponse <- cdAPIresponse(endpoint = paste('matches',matchId,'stoppages',sep='/'), ...)
+  
+  if(is.null(rawResponse)){
+    return(rawResponse)
+  } else {
+    
+    # Convert response to flat list
+    listResponse <- fromJSON(content(rawResponse,'text'),flatten=TRUE)
+    
+    # Handle if successful response but no events happened yet (second element of list empty)
+    if(is_empty(listResponse[[1]])) {
+      returnData        <- data.frame(matrix(ncol = length(getStoppagesWhitelist), nrow = 0))
+      names(returnData) <- getStoppagesWhitelist
+      message(paste0("\nWarning:\n--> 0 rows of data in response.")) 
+      return(returnData)
+    } else {
+      
+      # Convert list into DF
+      returnData <- data.frame(listResponse)
+      
+      # Get length of stoppages.attendance.players list - if empty skip the below as there are no attendees to return regardless of if stoppageAttendees = T
+      attendLength <- length(unlist(returnData$stoppages.attendance.players[1]))
+      
+      # This means that if there are no attendees in response, the response wont return any attendee cols in spite of stoppageAttendees = T
+      if(stoppageAttendees == T & attendLength > 0){
+        
+        # Extract stoppages.attendance.players list & stoppage trx id's & unnest
+        stoppagePlayers <- returnData[,c("stoppages.id", "stoppages.attendance.players")] %>% tidyr::unnest(stoppages.attendance.players) 
+        
+        # Get vector of unique squadIds (first squadId listed should be home squad)
+        squadIds        <- unique(stoppagePlayers$squadId)
+        
+        # HOME #
+        home      <- stoppagePlayers[stoppagePlayers$squadId == squadIds[1],] %>% rename_with(tolower, .cols = "displayName")
+        home$rowN <- with(home, ave(seq_along(stoppages.id), stoppages.id, FUN = seq_along))
+        home      <- home %>% pivot_wider(names_from  = rowN, values_from = c(displayname, fullname, personId), names_glue  = "stoppage.attendance.home.{.value}{rowN}") 
+        home      <- home[, getStoppages_homeNames[getStoppages_homeNames%in%names(home)], drop = FALSE]
+        
+        # AWAY #
+        away      <- stoppagePlayers[stoppagePlayers$squadId == squadIds[2],] %>% rename_with(tolower, .cols = "displayName")
+        away$rowN <- with(away, ave(seq_along(stoppages.id), stoppages.id, FUN = seq_along))
+        away      <- away %>% pivot_wider(names_from  = rowN, values_from = c(displayname, fullname, personId), names_glue  = "stoppage.attendance.away.{.value}{rowN}")
+        away      <- away[, getStoppages_awayNames[getStoppages_awayNames%in%names(away)], drop = FALSE]
+        
+        # Match 'stoppages.id' in 'returnData' with 'home'
+        match_idx_home <- match(returnData$stoppages.id, home$stoppages.id)
+        match_idx_away <- match(returnData$stoppages.id, away$stoppages.id)
+        
+        # Add columns from 'home' & 'away' to returnData via vector lookup of stoppages.id as opposed to join 
+        returnData <- cbind(returnData, home[match_idx_home, -which("stoppages.id" %in% names(home))])  
+        returnData <- cbind(returnData, away[match_idx_away, -which("stoppages.id" %in% names(away))])  
+        
+        # Add stoppageAttendees column names to getStoppagesWhitelist & getStoppagesExposedFields to run through below code ([-1] removes stoppages.id triplication)
+        # Note: Changes here are locally scoped to within the function
+        getStoppagesWhitelist     <- c(getStoppagesWhitelist, getStoppages_homeNames[-1], getStoppages_awayNames[-1])  
+        getStoppagesExposedFields <- c(getStoppagesExposedFields, setNames(getStoppages_homeNames[-1], getStoppages_homeNames[-1]), setNames(getStoppages_awayNames[-1], getStoppages_awayNames[-1]))
+        
+      } # close stoppageAttendees
+      
+      # Remove stoppages.attendance.players column regardless of 'stoppageAttendees' TRUE or FALSE
+      returnData <- returnData[,-which("stoppages.attendance.players"==names(returnData))]
+      
+    } # close response has rows
+    
+    # Get vector of the missing fields (IF ANY) in the call info
+    missing <- setdiff(getStoppagesWhitelist ,names(returnData))
+    
+    # Add on any of the missing columns in the response 
+    returnData[missing] <- lapply(missing, function(x) rep(NA, nrow(returnData)))
+    
+    # Select exposed fields (getStoppagesExposedFields) & rename columns
+    returnData        <- returnData[, getStoppagesExposedFields]
+    names(returnData) <- names(getStoppagesExposedFields)
+    
+    return(returnData)
+  } # close rawResponse is not NULL
+} 
 
 
 
