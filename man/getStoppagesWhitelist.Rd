@@ -5,7 +5,7 @@
 \alias{getStoppagesWhitelist}
 \title{getStoppagesWhitelist}
 \format{
-An object of class \code{character} of length 65.
+An object of class \code{character} of length 64.
 }
 \usage{
 getStoppagesWhitelist

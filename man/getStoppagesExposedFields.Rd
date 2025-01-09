@@ -5,7 +5,7 @@
 \alias{getStoppagesExposedFields}
 \title{getStoppagesExposedFields}
 \format{
-An object of class \code{character} of length 65.
+An object of class \code{character} of length 59.
 }
 \usage{
 getStoppagesExposedFields
