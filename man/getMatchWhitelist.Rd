@@ -3,14 +3,35 @@
 \docType{data}
 \name{getMatchWhitelist}
 \alias{getMatchWhitelist}
-\title{getMatchWhitelist}
+\title{#' getLeagueInfo_leagueLevelCombos
+#'
+#' This vector contains all the possible combinations of league and level in order to gather all info in getLeagueInfo function.
+#' @keywords internal
+# getLeagueInfo_leagueLevelCombos <- expand.grid(leagueId = 1:3, levelId = 1)}
 \format{
-An object of class \code{character} of length 48.
+An object of class \code{character} of length 52.
 }
 \usage{
 getMatchWhitelist
 }
 \description{
+#' getLeagueInfoExposedFields
+#'
+#' This vector contains all the fields we're exposing in the getLeagueInfoExposedFields function and their equivalent renames.
+#' @keywords internal
+getLeagueInfoExposedFields <- c(current.season.id = "currentSeason.seasonId",
+                                level.id          = "id",
+                                league.id         = "league.id", 
+                                level.name        = "name",
+                                league.name       = "league.name",
+                                level.code        = "code" , 
+                                league.code       = "league.code",
+                                league.gender     = "league.gender",
+                                competition.id    = "currentSeason.competitionId",
+                                championship.id   = "currentSeason.championshipId")
+getMatchWhitelist
+}
+\details{
 This vector contains all the possible columns that can be returned by hitting the endpoint within the getMatch function.
 }
 \keyword{internal}

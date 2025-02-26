@@ -4,7 +4,14 @@
 \alias{getSquad}
 \title{Squad Details}
 \usage{
-getSquad(squadId, seasonId, leagueId = 1, levelId = 1, ...)
+getSquad(
+  squadId,
+  seasonId,
+  leagueId = 1,
+  levelId = 1,
+  silenceWarning = FALSE,
+  ...
+)
 }
 \arguments{
 \item{squadId}{A unique numerical identifier of a squad.}

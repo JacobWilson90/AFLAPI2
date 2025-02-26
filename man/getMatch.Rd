@@ -4,10 +4,12 @@
 \alias{getMatch}
 \title{Match Details}
 \usage{
-getMatch(matchId, ...)
+getMatch(matchId, periods = FALSE, ...)
 }
 \arguments{
 \item{matchId}{An unique numerical identifier of a match.}
+
+\item{periods}{Logical \code{TRUE / FALSE}. Return period-level information? Defaults to FALSE.}
 
 \item{...}{Arguments to be passed to internal functions, such as \code{envir} or \code{version}.}
 }
@@ -60,6 +62,11 @@ A data frame with details about a match.
    \item \code{coin.toss.winning.squad.id} The squad id of the squad who won the coin toss.
    \item \code{coin.toss.direction.decision} The direction the squad who won the coin toss decided to kick to.
    \item \code{attendance} The crowd attendance for the given match.
+   \item \code{match.start.scheduled} The scheduled start time for the match in UTC.
+   \item \code{match.start.actual} The actual start time for the match in UTC.
+   \item \code{match.end.actual} The actual end time for the match in UTC.
+   \item \code{match.total.period.secs} The total duration of the match in seconds (Eg.\code{7149})
+   \item \code{match.total.duration} The total duration of the match in display format (Eg.\code{119:09})
    \item \code{statistic.update} The last UTC time that a statistic was last updated for a match.
 }
 }

@@ -20,22 +20,22 @@ A data frame with a list of persons for a match, with one row per person.
    \item \code{squad.id} A unique numerical identifier of the squad. (Players only)
    \item \code{squad.name} The name of the squad. (Players only)
    \item \code{squad.code} A short code to represent the squad. (Players only)
-   \item \code{person.id} A unique numerical identifier of a person.
-   \item \code{person.name} The person's full name.
-   \item \code{person.firstname} The person's first name.
-   \item \code{person.surname} The person's surname.
-   \item \code{person.display} The person's display name, represented as first initial and surname.
+   \item \code{person.id} A unique numerical identifier of a player.
+   \item \code{person.name} The player's full name.
+   \item \code{person.firstname} The player's first name.
+   \item \code{person.surname} The player's surname.
+   \item \code{person.display} The player's display name, represented as first initial and surname.
    \item \code{jumper} The jumper number worn on the players's uniform.
-   \item \code{selected.id} A numerical identifier of the person's selected position.
-   \item \code{selected.name} The person's selected position.
-   \item \code{selected.code} A short code representing the peron's selected position.
-   \item \code{position.id} A numerical identifier of the person's primary position in that season. (Players only)
-   \item \code{position.name} The person's primary position in that season. (Players only)
+   \item \code{selected.id} A numerical identifier of the player's selected position.
+   \item \code{selected.name} The player's selected position.
+   \item \code{selected.code} A short code representing the player's selected position.
+   \item \code{position.id} A numerical identifier of the player's primary position in that season. (Players only)
+   \item \code{position.name} The player's primary position in that season. (Players only)
    \item \code{position.code} A short code representing the peron's primary position in that season. (Players only)
-   \item \code{height} The person's height in centimetres. (Players only)
-   \item \code{weight} The person's weight in kilograms. (Players only)
-   \item \code{DOB} The person's date of birth (YYYY-MM-DD). (Players only)
-   \item \code{age} The person's age at the start of the match, to one decimal place. (Players only)
+   \item \code{height} The player's height in centimetres. (Players only)
+   \item \code{weight} The player's weight in kilograms. (Players only)
+   \item \code{DOB} The player's date of birth (YYYY-MM-DD). (Players only)
+   \item \code{age} The player's age at the start of the match, to one decimal place. (Players only)
 }
 }
 \description{

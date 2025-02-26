@@ -2,7 +2,7 @@
 % Please edit documentation in R/utility_functions.R
 \name{createPayLoad}
 \alias{createPayLoad}
-\title{Helper to create payloads for getPlayerStatsPOST() and getSquadStatsPOST() functions.}
+\title{Create POST endpoint payload}
 \usage{
 createPayLoad(endpoint, ...)
 }
@@ -15,7 +15,7 @@ createPayLoad(endpoint, ...)
 A nested list in the correct structure to pass into payload arguments of \code{getPlayerStatsPOST()} and \code{getSquadStatsPOST()}
 }
 \description{
-Create a payload for \code{getPlayerStatsPOST()} and \code{getSquadStatsPOST()} functions.
+Helper function to create a payload(s) for \code{getPlayerStatsPOST()} and \code{getSquadStatsPOST()} functions.
 }
 \examples{
 D50_Tackles_Q1 = list(metricCodes = list("TACKLE"), zones = list('D50'), periods = list(1), id = "D50_Tackles_Q1")

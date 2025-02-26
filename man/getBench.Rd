@@ -4,7 +4,7 @@
 \alias{getBench}
 \title{Match Bench}
 \usage{
-getBench(matchId, ...)
+getBench(matchId, silenceWarning = FALSE, ...)
 }
 \arguments{
 \item{matchId}{A unique numerical identifier of a match.}

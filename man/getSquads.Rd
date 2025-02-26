@@ -4,7 +4,7 @@
 \alias{getSquads}
 \title{Squad List}
 \usage{
-getSquads(seasonId, leagueId = 1, levelId = 1, ...)
+getSquads(seasonId, leagueId = 1, levelId = 1, squadId, ...)
 }
 \arguments{
 \item{seasonId}{A numerical identifier of a season. If missing, defaults to the current season of the League Level defined by 'leagueId' and 'levelId'.}
@@ -19,9 +19,12 @@ getSquads(seasonId, leagueId = 1, levelId = 1, ...)
 A data frame with a list of squads, with one row per squad.
 \itemize{
    \item \code{season.id} A numerical identifier of a season.
-   \item \code{id} A unique numerical identifier of the squad.
-   \item \code{name} The name of the squad.
-   \item \code{code} A short code to represent the squad.
+   \item \code{squad.name} The name of the squad.
+   \item \code{squad.code} A short code to represent the squad.
+   \item \code{squad.id} A unique numerical identifier of the squad.
+   \item \code{state.name} (when \code{squadId} is provided) The name of the state that the given squad is based.
+   \item \code{state.code} (when \code{squadId} is provided) A short code representing the state that the given squad is based.
+   \item \code{state.id} (when \code{squadId} is provided) A unique numerical identifier representing the state that the given squad is based.
 }
 }
 \description{

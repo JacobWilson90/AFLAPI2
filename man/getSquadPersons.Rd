@@ -21,19 +21,27 @@ getSquadPersons(squad, seasonId, leagueId = 1, levelId = 1, ...)
 A data frame with a list of persons for a squad, with one row per person.
 \itemize{
    \item \code{season.id} A numerical identifier of a season.
-   \item \code{squad.id} A unique numerical identifier of the squad.
    \item \code{squad.name} The name of the squad.
-   \item \code{id} A unique numerical identifier of a person.
+   \item \code{squad.code} A short code to represent the name of the squad.
+   \item \code{squad.id} A unique numerical identifier of the squad.
+   \item \code{fullname} The full name of the person.
+   \item \code{display} The person's display name, represented as first initial and surname.
    \item \code{firstname} The person's first name.
    \item \code{surname} The person's surname.
-   \item \code{name} The person's full name.
-   \item \code{display} The person's display name, represented as first initial and surname.
+   \item \code{id} A unique numerical identifier of a person.
+   \item \code{jumper.number} The jumper number worn on the players's uniform.
    \item \code{position} The person's primary position within a season. The position where a player has spent most time.
    \item \code{DOB} The person's date of birth (YYYY-MM-DD).
    \item \code{age.season} The person's age in years at the start of the first game of the season, to one decimal place.
    \item \code{age.year} The person's age at December 31 of the year in which the season ends, rounded down to a whole year.
+   \item \code{age.today} The person's age as of the current date, to one decimal place.
    \item \code{height} The person's height in centimetres.
    \item \code{weight} The person's weight in kilograms.
+   \item \code{position.long} The full text description of a players primary position within a season. (Eg. \code{'General Defender'})
+   \item \code{position} The person's primary position within a season in short form text. (Eg. \code{'Gen Def'})
+   \item \code{position.code} A short code to represent the players primary position within a season. (Eg. \code{'GD'})
+   \item \code{position.id} A unique numerical identifier to represent the players primary position within a season. 
+   \item \code{matches.season} The person's number of matches played for the given squad in the given season.id.
 }
 }
 \description{

@@ -17,25 +17,29 @@ getPeriodScores(matchId, cumulative = FALSE, ...)
 A data frame with a list of quarters and scores for each quarter.
 \itemize{
    \item \code{match.id} A unique numerical identifier of a match.
-   \item \code{id} The transaction ID of the interchange move, used for ordering chronologically.
-   \item \code{home.id} A unique numerical identifier of the home squad.
+   \item \code{period} The period of the match.
    \item \code{home.name} The name of the home squad.
    \item \code{home.code} A short code to represent the home squad.
-   \item \code{away.id} A unique numerical identifier of the away squad.
-   \item \code{away.name} The name of the away squad.
-   \item \code{away.code} A short code to represent the away squad.
-   \item \code{period} The period of the match.
+   \item \code{home.id} A unique numerical identifier of the home squad.
    \item \code{home.goals} Goals scored by the home squad.
    \item \code{home.behinds} Behinds scored by the home squad.
    \item \code{home.points} Points scored by the home squad.
-   \item \code{home.result} Period result for the home squad. W/L/D.
    \item \code{home.margin} Scoreboard margin for the home squad.
+   \item \code{home.period.result} Period result for the home squad \code{Win/Loss/Draw}
+   \item \code{home.period.result.code} Period result code for the home squad \code{W/L/D}
+   \item \code{home.match.result} Match result for the home squad \code{W/L/D}
+   \item \code{away.name} The name of the away squad.
+   \item \code{away.code} A short code to represent the away squad.
+   \item \code{away.id} A unique numerical identifier of the away squad.
    \item \code{away.goals} Goals scored by the away squad.
    \item \code{away.behinds} Behinds scored by the away squad.
    \item \code{away.points} Points scored by the away squad.
-   \item \code{away.result} Period result for the away squad. W/L/D.
    \item \code{away.margin} Scoreboard margin for the away squad.
-   \item \code{winning.squad.id} The ID of the winning squad.
+   \item \code{away.period.result} Period result for the away squad \code{Win/Loss/Draw}
+   \item \code{away.period.result.code} Period result code for the away squad \code{W/L/D}
+   \item \code{away.match.result} Match result for the away squad \code{W/L/D}
+   \item \code{winning.squad.id.period} The squad ID of the winning squad for the given period.
+   \item \code{winning.squad.id.match} The squad ID of the winning squad for the match.
    \item \code{cumulative} TRUE/FALSE based on the \code{cumulative} parameter passed to the function.
 }
 }

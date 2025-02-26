@@ -5,7 +5,7 @@
 \alias{getMatchPersons_officialsDF}
 \title{getMatchPersons_officialsDF}
 \format{
-An object of class \code{data.frame} with 0 rows and 7 columns.
+An object of class \code{data.frame} with 0 rows and 8 columns.
 }
 \usage{
 getMatchPersons_officialsDF

@@ -4,7 +4,7 @@
 \alias{getMatchPeriods}
 \title{Match Periods}
 \usage{
-getMatchPeriods(matchId, ...)
+getMatchPeriods(matchId, silenceWarning = FALSE, ...)
 }
 \arguments{
 \item{matchId}{A unique numerical identifier of a match.}

@@ -4,7 +4,7 @@
 \alias{getFixture}
 \title{Fixture}
 \usage{
-getFixture(seasonId, leagueId = 1, levelId = 1, ...)
+getFixture(seasonId, squadId, leagueId = 1, levelId = 1, ...)
 }
 \arguments{
 \item{seasonId}{A numerical identifier of a season. If missing, defaults to the current season of the League Level defined by 'leagueId' and 'levelId'.}
@@ -18,38 +18,52 @@ getFixture(seasonId, leagueId = 1, levelId = 1, ...)
 \value{
 A data frame with the fixture for a given season, with one row per match.
 \itemize{
-   \item \code{competition.code} A short code describing the competition.
-   \item \code{season.id} A numerical identifier of a season.
-   \item \code{phase.code} A short code describing the phase of the season.
-   \item \code{type.id} A numerical indicator of the match type.
-   \item \code{type.name} A description of the match type.
-   \item \code{round.number} The round number of the match. Continues to count up during finals.
-   \item \code{round.phaseNumber} The round number of the match within the phase. Starts again from one for finals.
-   \item \code{round.code} A short code representing the name of the round.
-   \item \code{match.id} A unique numerical identifier of a match.
-   \item \code{match.order} The order of a match within a round, sorted by start date and time.
-   \item \code{match.start} The start time of a match in UTC time.
-   \item \code{match.date} The calendar date of a match in local time.
-   \item \code{match.time} The local start time of a match.
-   \item \code{home.id} A unique numerical identifier of the home squad.
-   \item \code{home.name} The name of the home squad.
-   \item \code{home.code} A short code to represent the home squad.
-   \item \code{away.id} A unique numerical identifier of the away squad.
-   \item \code{away.name} The name of the away squad.
-   \item \code{away.code} A short code to represent the away squad.
-   \item \code{venue.id} A unique numerical identifier of the match venue.
-   \item \code{venue.name} The name of the match venue.
-   \item \code{venue.code} A short code to represent the match venue.
-   \item \code{status.id} A numerical identifier of the match's current status.
-   \item \code{status.name} The match's current status.
-   \item \code{status.type.id} A numerical identifier of the match status type.
-   \item \code{status.type.name} The match's current status type.
-   \item \code{home.goals} The number of goals kicked by the home squad.
-   \item \code{home.behinds} The number of behinds kicked by the home squad.
-   \item \code{home.points} The number of points scored by the home squad.
-   \item \code{away.goals} The number of goals kicked by the away squad.
-   \item \code{away.behinds} The number of behinds kicked by the away squad.
-   \item \code{away.points} The number of points scored by the away squad.
+  \item \code{competition.name} The name of the competition.
+  \item \code{competition.code} A short code describing the competition.
+  \item \code{competition.id} A unique numerical identifier of the competition.
+  \item \code{season.id} A numerical identifier of a season.
+  \item \code{season.start.date} The start date of the season.
+  \item \code{season.end.date} The end date of the season.
+  \item \code{round.phaseNumber} The round number of the match within the phase. Starts again from one for finals.
+  \item \code{phase.name} The name of the phase of the season.
+  \item \code{phase.code} A short code describing the phase of the season.
+  \item \code{phase.id} A unique numerical identifier of the phase.
+  \item \code{round.number} The round number of the match. Continues to count up during finals.
+  \item \code{round.name} The name of the round.
+  \item \code{round.code} A short code representing the name of the round.
+  \item \code{round.id} A unique numerical identifier of the round.
+  \item \code{venue.name} The name of the match venue.
+  \item \code{venue.code} A short code to represent the match venue.
+  \item \code{venue.id} A unique numerical identifier of the match venue.
+  \item \code{venue.timezone} The time zone of the match venue.
+  \item \code{match.id} A unique numerical identifier of a match.
+  \item \code{type.name} A description of the match type.
+  \item \code{match.type.code} A short code representing the match type.
+  \item \code{match.type.id} A numerical indicator of the match type.
+  \item \code{match.order} The order of a match within a round, sorted by start date and time.
+  \item \code{match.date} The calendar date of the match in local time.
+  \item \code{match.time} The local start time of the match.
+  \item \code{match.start} The start time of the match in UTC time.
+  \item \code{status.name} The match's current status.
+  \item \code{match.status.code} A short code representing the match's current status.
+  \item \code{status.id} A numerical identifier of the match's current status.
+  \item \code{match.status.period} The current period of the match.
+  \item \code{match.status.period.secs} The number of seconds elapsed in the current period.
+  \item \code{match.status.period.display} A display string of the current period.
+  \item \code{match.status.match.display} The match's current status type.
+  \item \code{home.name} The name of the home squad.
+  \item \code{home.code} A short code to represent the home squad.
+  \item \code{home.id} A unique numerical identifier of the home squad.
+  \item \code{home.goals} The number of goals kicked by the home squad.
+  \item \code{home.behinds} The number of behinds kicked by the home squad.
+  \item \code{home.points} The number of points scored by the home squad.
+  \item \code{away.name} The name of the away squad.
+  \item \code{away.code} A short code to represent the away squad.
+  \item \code{away.id} A unique numerical identifier of the away squad.
+  \item \code{away.goals} The number of goals kicked by the away squad.
+  \item \code{away.behinds} The number of behinds kicked by the away squad.
+  \item \code{away.points} The number of points scored by the away squad.
+  \item \code{winning.squad.id.match} The unique numerical identifier of the winning squad for the match.
 }
 }
 \description{

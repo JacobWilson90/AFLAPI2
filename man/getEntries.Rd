@@ -28,11 +28,11 @@ A data frame with a list of inside 50 entries for a match, with one row per entr
    \item \code{entry.source.name} The game situation relative to the origin of a team's possession that results in an entry.
    \item \code{entry.source.type} Inside 50 entries where direct indicates the first chain after the specified entry.source.name 
    
-   For centre bounce and midfield stoppage \code{entry.source.name}, direct indicates the entry was in the clearance chain \cr
+   - For centre bounce and midfield stoppage \code{entry.source.name}, direct indicates the entry was in the clearance chain \cr
    
-   For repeat \code{entry.source.name}, direct indicates the entry was on the first turnover chain after an opposition rebound 50 \cr
+   - For repeat \code{entry.source.name}, direct indicates the entry was on the first turnover chain after an opposition rebound 50 \cr
    
-   For transition \code{entry.source.name}, direct indicates the entry was in the same chain as the rebound 50
+   - For transition \code{entry.source.name}, direct indicates the entry was in the same chain as the rebound 50
    \item \code{entry.kick.is.ground} For inside 50 entries that are kicks, was the entry from a ground kick (true/false).
    \item \code{entry.kick.foot} For inside 50 entries that are kicks, which foot did the kicking player use.
    \item \code{entry.kick.intent} For inside 50 entries that are kicks, the intent of the kicker. 

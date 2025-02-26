@@ -9,8 +9,7 @@ cdAPIresponse(
   endpoint,
   envir = c("", "sandbox", "dev"),
   base_url = "https://api.afl.championdata.io",
-  version = "v1",
-  verbose = F
+  version = "v1"
 )
 }
 \arguments{

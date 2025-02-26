@@ -5,7 +5,7 @@
 \alias{getMatchPersons_officialsExposedFields}
 \title{getMatchPersons_officialsExposedFields}
 \format{
-An object of class \code{character} of length 7.
+An object of class \code{character} of length 8.
 }
 \usage{
 getMatchPersons_officialsExposedFields

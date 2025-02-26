@@ -2,7 +2,7 @@
 % Please edit documentation in R/utility_functions.R
 \name{to_minsec}
 \alias{to_minsec}
-\title{to_minsec}
+\title{Minute:Second display}
 \usage{
 to_minsec(x, leadingZero = FALSE)
 }
@@ -12,7 +12,7 @@ to_minsec(x, leadingZero = FALSE)
 \item{leadingZero}{Logical. Add a leading zero to minute values less than 10?}
 }
 \value{
-A text string in the form "MI:SS" - eg. "9:54" if @param leadingZero is FALSE, "09:54" if @param leadingZero is TRUE.
+A text string in the form "MI:SS" (Eg. "9:54" if \code{leadingZero = FALSE} "09:54" if \code{leadingZero = TRUE})
 }
 \description{
 Convert an integer of seconds elapsed to a text string with minutes and seconds.

@@ -4,7 +4,7 @@
 \alias{getRotations}
 \title{Match Rotations}
 \usage{
-getRotations(matchId, ...)
+getRotations(matchId, currentStints = FALSE, ...)
 }
 \arguments{
 \item{matchId}{A unique numerical identifier of a match.}
@@ -12,28 +12,40 @@ getRotations(matchId, ...)
 \item{...}{Arguments to be passed to internal functions, such as \code{envir} or \code{version}.}
 }
 \value{
-A data frame with a list of rotations for the match, with one row per interchange move.
+A data frame with all of the rotations for a given match. 
 \itemize{
    \item \code{match.id} A unique numerical identifier of a match.
-   \item \code{id} The transaction ID of the interchange move, used for ordering chronologically.
-   \item \code{squad.id} A unique numerical identifier of the squad.
-   \item \code{squad.name} The name of the squad.
-   \item \code{squad.code} A short code to represent the squad.
-   \item \code{period} The period of the interchange move.
-   \item \code{secs} The elapsed time within the period of the interchange move.
-   \item \code{off.id} A unique numerical identifier of the player coming off the ground.
+   \item \code{squad.name} The name of the squad the rotation player belongs to.
+   \item \code{squad.code} A short code to represent the squad the rotation player belongs to.
+   \item \code{squad.id} A unique numerical identifier of the squad the rotation player belongs to.
+   \item \code{period} The period the rotation occured in.
+   \item \code{secs} The elapsed time within the period the rotation occured in.
+   \item \code{id} The transaction ID of the rotation, used for ordering chronologically.
    \item \code{off.name} The full name of the player coming off the ground.
    \item \code{off.display} The display name of the player coming off the ground, represented as first initial and surname.
-   \item \code{off.reason} The reason for the interchange move.
-   \item \code{off.code} A short text description of the reason for the interchange move.
-   \item \code{on.id} A unique numerical identifier of the player coming on the ground. Empty for start-of-match initialisation of the interchange bench.
+   \item \code{off.id} A unique numerical identifier of the player coming off the ground.
    \item \code{on.name} The full name of the player coming on the ground. Empty for start-of-match initialisation of the interchange bench.
    \item \code{on.display} The display name of the player coming on the ground, represented as first initial and surname. Empty for start-of-match initialisation of the interchange bench.
+   \item \code{on.id} A unique numerical identifier of the player coming on the ground. Empty for start-of-match initialisation of the interchange bench.
+   \item \code{off.reason} The reason for the rotation  (ie.\code{'Regular' , 'Injured'}.)
+   \item \code{off.code} A short text description of the reason for the rotation (ie.\code{'REG' , 'INJ'}.)
+   \item \code{squad.name} (when \code{currentStints = TRUE}) The name of the squad a given players rotation stint belongs to.
+   \item \code{squad.code} (when \code{currentStints = TRUE}) A short code to represent the squad a given players rotation stint belongs to.
+   \item \code{squad.id} (when \code{currentStints = TRUE}) A unique numerical identifier of the squad a given players rotation stint belongs to.
+   \item \code{player.fullname} (when \code{currentStints = TRUE}) The full name of the player the rotation stint belongs to.
+   \item \code{player.display.name} (when \code{currentStints = TRUE}) The display name of the player the rotation stint belongs to, represented as first initial and surname.
+   \item \code{player.id} (when \code{currentStints = TRUE}) A unique numerical identifier of the player the rotation stint belongs to.
+   \item \code{current.stint.period} (when \code{currentStints = TRUE}) The period the given rotation stint occurred in.
+   \item \code{current.stint.period.secs} (when \code{currentStints = TRUE}) The period seconds value that the given rotation stint started
+   \item \code{current.stint.elapsed.secs} (when \code{currentStints = TRUE}) The elapsed seconds that the given stint has been going for. 
+   \item \code{current.stint.status} (when \code{currentStints = TRUE}) The status of the given rotation stint (ie.\code{'ON' , 'OFF'}.)
+   \item \code{current.stint.reason} (when \code{currentStints = TRUE}) The reason for the given rotation stint (ie.\code{'Regular' , 'Injured'}.)
+   \item \code{current.stint.reason.code} (when \code{currentStints = TRUE}) A short text description of the reason for the given rotation stint (ie.\code{'REG' , 'INJ'}.)
 }
 }
 \description{
-Get a list of rotations for a match.
+Get a dataframe of rotations for a match.
 }
 \examples{
-getRotations(216085122)
+getRotations(matchId = 120390401)
 }

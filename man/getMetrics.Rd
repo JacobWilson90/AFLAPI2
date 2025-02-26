@@ -7,28 +7,33 @@
 getMetrics(matchId, ...)
 }
 \arguments{
-\item{matchId}{An unique numerical identifier of a match.}
+\item{matchId}{A unique numerical identifier of a match.}
 
 \item{...}{Arguments to be passed to internal functions, such as \code{envir} or \code{version}.}
 }
 \value{
-A data frame with a list of metrics for a match.
+A data frame with all of the rotations for a given match. 
 \itemize{
    \item \code{match.id} A unique numerical identifier of a match.
-   \item \code{id} A unique numerical identifier of a metric.
-   \item \code{name} The metric name (singular).
-   \item \code{plural} The metric name (plural).
-   \item \code{code} The metric code (ALL_CAPS format).
-   \item \code{short} An abbreviated metric name (max 25 characters).
-   \item \code{level.id} A numerical identifier of the metric level.
-   \item \code{level.name} The metric level (Squad, Player, or Both).
-   \item \code{format.id} A numerical identifier of the metric format.
-   \item \code{format.id} A numerical identifier of the metric format.
-   \item \code{description} The text description of the metric definition.
+   \item \code{metric.level} A numerical identifier of the metric level.
+   \item \code{metric.level.id} A unique numerical identifier of the metric level.
+   \item \code{metric.code} A short code representing the metric.
+   \item \code{metric.name} The metric name (singular).
+   \item \code{metric.id} A unique numerical identifier of a metric.
+   \item \code{metric.name.short} An abbreviated metric name (max 25 characters).
+   \item \code{metric.name.short.code} An abbreviated, capitalised code for the metric name.
+   \item \code{metric.name.plural} The metric name (plural).
+   \item \code{metric.name.display} The display version of the metric name in camel case format.
+   \item \code{metric.description} The text description of the metric definition.
+   \item \code{metric.format} The format in which the metric is recorded (Eg.\code{'Integer'},\code{'Percentage One Decimal'}
+   \item \code{metric.format.id} A numerical identifier of the metric format.
+   \item \code{metric.format.avg} The average format applied to the metric, if applicable.
+   \item \code{metric.format.avg.id} A numerical identifier of the averages metric format.
+   \item \code{metric.isTransactional} Indicates whether the metric is recorded at a transactional level \code{TRUE/FALSE}.
 }
 }
 \description{
-Get a list of valid metrics for a match.
+Get a dataframe of available metrics for each match
 }
 \examples{
 getMetrics(216085122)
