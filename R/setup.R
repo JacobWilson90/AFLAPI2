@@ -44,27 +44,26 @@ cdAPI <- function(endpoint,envir=c('','sandbox','dev'),base_url='https://api.afl
 #'@examples
 #'cdAPIresponse(matchId,paste('matches',matchId,'entries',sep='/')
 #'@export
-cdAPIresponse <- function(matchId,endpoint,envir=c('','sandbox','dev'),base_url='https://api.afl.championdata.io',version='v1',verbose = F){
+cdAPIresponse <- function(matchId, endpoint, envir=c('','sandbox','dev'), base_url='https://api.afl.championdata.io',version='v1'){
   
-  getURL      <- gsub('afl-.ch','afl.ch',gsub('afl',paste('afl',envir[1],sep='-'),base_url))
-  fullUrl     <- modify_url(getURL,path=paste(version,endpoint,sep='/'))
-  if(verbose) message("Full URL: ",fullUrl)
-  rawResponse <- GET(fullUrl, authenticate(api_un,api_pw), add_headers(c(accept = "text/plain", `Content-Type` = "application/json", `Accept-Encoding` = "gzip")))  
+  # Build URL for response
+  getURL <- gsub('afl-.ch','afl.ch',gsub('afl',paste('afl',envir[1],sep='-'),base_url))
   
-  # Handling 
-  if(rawResponse$status==200){
-    return(rawResponse)
+  # Make & perform request
+  request <- request(modify_url(getURL,path=paste(version,endpoint,sep='/'))) %>%       # Make request
+    req_headers("accept"          = "text/plain",
+                "Content-Type"    = "application/json",
+                "Accept-Encoding" = "gzip" , 
+                "User-Agent"      = userAgentHeader) %>%                                # Header
+    req_auth_basic(api_un, api_pw) %>%                                                  # Add auth
+    req_error(is_error = \(.) FALSE)  %>%                                               # Disable the normal error handling of httr2
+    req_perform()                                                                       # Perform request                                                                            
+  
+  # Handling of response  
+  if(request$status_code==200){
+    return(request)
   } else {
-    
-    if(substr(content(rawResponse, "text", encoding = "UTF-8"),1,1)=="{"){
-      encodeJson   <- fromJSON(content(rawResponse, "text", encoding = "UTF-8"))
-    } else {
-      encodeJson   <- content(rawResponse, "text", encoding = "UTF-8")
-    }
-    lengthList   <- length(encodeJson)
-    lengthErrors <- length(encodeJson[[lengthList]])
-    message("Error(s) [Status: ",rawResponse$status,"]:\n",paste0("--> ",encodeJson[[lengthList]][1:lengthErrors],collapse = "\n"))
-    return(NULL)
+    extractError(request)
   }
 }
 
@@ -96,21 +95,25 @@ cdAPIPOSTresponse <- function(matchId,endpoint,payload,baseUrl="https://api.afl.
   # URL for POST 
   postURL <- modify_url(gsub('afl-.ch','afl.ch',gsub('afl',paste('afl',envir[1],sep='-'),baseUrl)),path=paste(version,endpointString,sep='/'))
   
-  # Hit endpoint
-  rawResponse <- POST(postURL,
-                      body   = payload,
-                      encode = "json" ,
-                      add_headers(c("accept" = "text/plain", "Content-Type" = "application/json", `Accept-Encoding` = "gzip")) , 
-                      authenticate(api_un,api_pw))
+  # Create/perform request
+  rawResponse = request(postURL) %>%
+    req_body_json(payload) %>%
+    req_headers("accept"          = "text/plain",
+                "Content-Type"    = "application/json",
+                "Accept-Encoding" = "gzip" , 
+                "User-Agent" = userAgentHeader) %>%
+    req_auth_basic(api_un, api_pw) %>%
+    req_error(is_error = \(.) FALSE)  %>%    
+    req_perform()
   
   # Handling 
   if(rawResponse$status==200){
     return(rawResponse)
   } else {
-    if(substr(content(rawResponse, "text", encoding = "UTF-8"),1,1)=="{"){
-      encodeJson   <- fromJSON(content(rawResponse, "text", encoding = "UTF-8"))
+    if(substr(rawResponse %>% resp_body_string(),1,1)=="{"){
+      encodeJson   <- rawResponse %>% resp_body_string() %>% fromJSON()
     } else {
-      encodeJson   <- content(rawResponse, "text", encoding = "UTF-8")
+      encodeJson   <- rawResponse %>% resp_body_string()
     }
   }
   lengthList   <- length(encodeJson)

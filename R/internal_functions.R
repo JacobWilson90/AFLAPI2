@@ -112,3 +112,28 @@ isAFL <- function(leagueId){
   }
   return(TRUE)
 }
+
+#'extractError 
+#'
+#'This function is used inside of the new httr2 version of cdAPIResponse() to extract the error message from the response object if the response is not successful.
+#'@return An error message (if any) provided from the API.
+#'@keywords internal
+extractError <- function(response) { 
+  if(response %>% resp_has_body()){
+    # Extract body from non-200 response
+    responseBody <- response %>% resp_body_string()
+    
+    # Handle cases where the response is wrapped in formatting
+    if(substr(responseBody,1,1)=="{"){
+      responseBody <- responseBody %>% fromJSON()
+    } 
+    # Collate and print all errors experienced
+    lengthList   <- length(responseBody)
+    lengthErrors <- length(responseBody[[lengthList]])
+    message("Error(s) [Status: ",response$status,"]:\n",paste0("--> ",responseBody[[lengthList]][1:lengthErrors],collapse = "\n"))
+    return(NULL)
+  } else {
+    message("Error [Status: ",response$status,"]:\n--> There was no accompanying error message for this ",response$status," error from the API.")
+    return(NULL)
+  }
+}

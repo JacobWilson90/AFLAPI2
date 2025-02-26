@@ -40,8 +40,11 @@ getSeason <- function(seasonId,leagueId=1,levelId=1,...){
     return(NULL)  
   } else {
     
-    # Convert response into DF
-    returnData <- data.frame(fromJSON(content(rawResponse,'text'),flatten=TRUE))
+    # Convert response to flat list
+    listResponse <- rawResponse %>% resp_body_json(simplifyVector = TRUE)
+    
+    # Convert list into DF
+    returnData <- listResponse %>% as.data.frame() %>% jsonlite::flatten()
     
     # Get vector of the missing fields (IF ANY) in the call info
     missing <- setdiff(getSeasonWhitelist,names(returnData))
@@ -72,96 +75,95 @@ getSeason <- function(seasonId,leagueId=1,levelId=1,...){
 #'@param levelId A unique numerical identifier of a level. Defaults to Seniors.
 #'@param ... Arguments to be passed to internal functions, such as \code{envir} or \code{version}.
 #'@return A data frame with the fixture for a given season, with one row per match.
-#'\itemize{
-#'    \item \code{competition.code} A short code describing the competition.
-#'    \item \code{season.id} A numerical identifier of a season.
-#'    \item \code{phase.code} A short code describing the phase of the season.
-#'    \item \code{type.id} A numerical indicator of the match type.
-#'    \item \code{type.name} A description of the match type.
-#'    \item \code{round.number} The round number of the match. Continues to count up during finals.
-#'    \item \code{round.phaseNumber} The round number of the match within the phase. Starts again from one for finals.
-#'    \item \code{round.code} A short code representing the name of the round.
-#'    \item \code{match.id} A unique numerical identifier of a match.
-#'    \item \code{match.order} The order of a match within a round, sorted by start date and time.
-#'    \item \code{match.start} The start time of a match in UTC time.
-#'    \item \code{match.date} The calendar date of a match in local time.
-#'    \item \code{match.time} The local start time of a match.
-#'    \item \code{home.id} A unique numerical identifier of the home squad.
-#'    \item \code{home.name} The name of the home squad.
-#'    \item \code{home.code} A short code to represent the home squad.
-#'    \item \code{away.id} A unique numerical identifier of the away squad.
-#'    \item \code{away.name} The name of the away squad.
-#'    \item \code{away.code} A short code to represent the away squad.
-#'    \item \code{venue.id} A unique numerical identifier of the match venue.
-#'    \item \code{venue.name} The name of the match venue.
-#'    \item \code{venue.code} A short code to represent the match venue.
-#'    \item \code{status.id} A numerical identifier of the match's current status.
-#'    \item \code{status.name} The match's current status.
-#'    \item \code{status.type.id} A numerical identifier of the match status type.
-#'    \item \code{status.type.name} The match's current status type.
-#'    \item \code{home.goals} The number of goals kicked by the home squad.
-#'    \item \code{home.behinds} The number of behinds kicked by the home squad.
-#'    \item \code{home.points} The number of points scored by the home squad.
-#'    \item \code{away.goals} The number of goals kicked by the away squad.
-#'    \item \code{away.behinds} The number of behinds kicked by the away squad.
-#'    \item \code{away.points} The number of points scored by the away squad.
+#' \itemize{
+#'   \item \code{competition.name} The name of the competition.
+#'   \item \code{competition.code} A short code describing the competition.
+#'   \item \code{competition.id} A unique numerical identifier of the competition.
+#'   \item \code{season.id} A numerical identifier of a season.
+#'   \item \code{season.start.date} The start date of the season.
+#'   \item \code{season.end.date} The end date of the season.
+#'   \item \code{round.phaseNumber} The round number of the match within the phase. Starts again from one for finals.
+#'   \item \code{phase.name} The name of the phase of the season.
+#'   \item \code{phase.code} A short code describing the phase of the season.
+#'   \item \code{phase.id} A unique numerical identifier of the phase.
+#'   \item \code{round.number} The round number of the match. Continues to count up during finals.
+#'   \item \code{round.name} The name of the round.
+#'   \item \code{round.code} A short code representing the name of the round.
+#'   \item \code{round.id} A unique numerical identifier of the round.
+#'   \item \code{venue.name} The name of the match venue.
+#'   \item \code{venue.code} A short code to represent the match venue.
+#'   \item \code{venue.id} A unique numerical identifier of the match venue.
+#'   \item \code{venue.timezone} The time zone of the match venue.
+#'   \item \code{match.id} A unique numerical identifier of a match.
+#'   \item \code{type.name} A description of the match type.
+#'   \item \code{match.type.code} A short code representing the match type.
+#'   \item \code{match.type.id} A numerical indicator of the match type.
+#'   \item \code{match.order} The order of a match within a round, sorted by start date and time.
+#'   \item \code{match.date} The calendar date of the match in local time.
+#'   \item \code{match.time} The local start time of the match.
+#'   \item \code{match.start} The start time of the match in UTC time.
+#'   \item \code{status.name} The match's current status.
+#'   \item \code{match.status.code} A short code representing the match's current status.
+#'   \item \code{status.id} A numerical identifier of the match's current status.
+#'   \item \code{match.status.period} The current period of the match.
+#'   \item \code{match.status.period.secs} The number of seconds elapsed in the current period.
+#'   \item \code{match.status.period.display} A display string of the current period.
+#'   \item \code{match.status.match.display} The match's current status type.
+#'   \item \code{home.name} The name of the home squad.
+#'   \item \code{home.code} A short code to represent the home squad.
+#'   \item \code{home.id} A unique numerical identifier of the home squad.
+#'   \item \code{home.goals} The number of goals kicked by the home squad.
+#'   \item \code{home.behinds} The number of behinds kicked by the home squad.
+#'   \item \code{home.points} The number of points scored by the home squad.
+#'   \item \code{away.name} The name of the away squad.
+#'   \item \code{away.code} A short code to represent the away squad.
+#'   \item \code{away.id} A unique numerical identifier of the away squad.
+#'   \item \code{away.goals} The number of goals kicked by the away squad.
+#'   \item \code{away.behinds} The number of behinds kicked by the away squad.
+#'   \item \code{away.points} The number of points scored by the away squad.
+#'   \item \code{winning.squad.id.match} The unique numerical identifier of the winning squad for the match.
 #'}
 #'@examples
 #'getFixture(2022)
 #'getFixture()
 #'@export
-getFixture <- function(seasonId,leagueId=1,levelId=1,...){
-    if(missing(seasonId)) seasonId <- getCurrentSeason(leagueId,levelId,...)
-    temp <- cdAPI(paste('leagues',leagueId,'levels',levelId,'seasons',seasonId,'fixture',sep='/'),...) %>%
-        unnest(cols='phases.rounds') %>%
-        rename(round.id = 'id',
-               round.name = 'name',
-               round.code = 'code',
-               round.number = 'number',
-               round.phaseNumber = 'phaseNumber',
-               season.startDate = 'startDate',
-               season.startYear = 'startYear',
-               season.endDate = 'endDate',
-               season.endYear = 'endYear',
-               phase.code='phases.code') %>%
-        unnest(cols='matches')
-    if(!'squads.home.score.goals'%in%names(temp)) temp <- temp %>% 
-        mutate(squads.home.score.goals=NA_integer_,
-               squads.home.score.behinds=NA_integer_,
-               squads.home.score.points=NA_integer_,
-               squads.away.score.goals=NA_integer_,
-               squads.away.score.behinds=NA_integer_,
-               squads.away.score.points=NA_integer_
-        )
-    temp %>%
-        rename(match.id = 'id',
-               match.order = 'roundOrder',
-               match.start='date.utcMatchStart',
-               match.date='date.startDate',
-               match.time='date.startTime',
-               home.id='squads.home.id',
-               home.name='squads.home.name',
-               home.code='squads.home.code',
-               away.id='squads.away.id',
-               away.name='squads.away.name',
-               away.code='squads.away.code',
-               home.goals='squads.home.score.goals',
-               home.behinds='squads.home.score.behinds',
-               home.points='squads.home.score.points',
-               away.goals='squads.away.score.goals',
-               away.behinds='squads.away.score.behinds',
-               away.points='squads.away.score.points'
-        ) %>%
-        select(competition.code='competitionCode',season.id='seasonId',
-               phase.code,type.id,type.name,
-               round.number,round.phaseNumber,round.code,
-               match.id,match.order,match.start,match.date,match.time,
-               home.id,home.name,home.code,away.id,away.name,away.code,
-               venue.id,venue.name,venue.code,
-               status.id,status.name,status.type.id='status.typeId',status.type.name='status.typeName',
-               home.goals,home.behinds,home.points,
-               away.goals,away.behinds,away.points
-        )
+getFixture <- function(seasonId, squadId, leagueId=1, levelId=1,...){
+  
+  # Handle input params incl. squadId
+  seasonId <- if(missing(seasonId)) getCurrentSeason(...) else seasonId
+  squadId  <- if(missing(squadId)) NULL else paste("?squadId=", squadId, sep='')             
+  
+  # Hit API
+  rawResponse <- cdAPIresponse(endpoint = paste0(paste('leagues',leagueId,'levels',levelId,'seasons',seasonId,'fixture',sep='/'),squadId), ...)
+  
+  if(is.null(rawResponse)){
+    return(rawResponse)
+  } else {
+    # Convert response to flat list
+    listResponse <- rawResponse %>% resp_body_json(simplifyVector = TRUE)
+    
+    # Convert list into DF
+    returnData <- listResponse %>% as.data.frame() %>% jsonlite::flatten()
+    
+    # Continue to unnest/flatten out fixture fields
+    returnData <- returnData %>% 
+      tidyr::unnest("phases.rounds") %>% 
+      mutate_if(is.list, ~ map(.x, as.data.frame)) %>% 
+      tidyr::unnest("matches", names_sep = "." ) %>% 
+      jsonlite::flatten()
+    
+    # Get vector of the missing fields (IF ANY) in the call info
+    missing <- setdiff(getFixtureWhitelist,names(returnData))
+    
+    # Add on any of the missing columns in the response 
+    returnData[missing] <- lapply(missing, function(x) rep(NA, nrow(returnData)))
+    
+    # Select exposed fields (getFixtureExposedFields) & rename columns
+    returnData        <- returnData[, getFixtureExposedFields ]
+    names(returnData) <- names(getFixtureExposedFields)
+    
+    return(returnData)
+  }
 }
 
 #'Ladder
@@ -200,34 +202,37 @@ getFixture <- function(seasonId,leagueId=1,levelId=1,...){
 #'getLadder()
 #'@export
 getLadder <- function(seasonId,roundNumber,leagueId=1,levelId=1,...){
-  
   # Handling the default for not passing in a seasonId
   if(missing(seasonId)) seasonId <- getCurrentSeason(leagueId,levelId,...)
   
-  # Handling the default for not passing in a roundNo
-  if(missing(roundNumber)) roundNumber <- NULL else roundNumber 
-  
-  # Hit endpoint
-  rawResponse  <- cdAPIresponse(endpoint = paste('leagues',leagueId,'levels',levelId,'seasons',seasonId,'ladder',roundNumber,sep = "/"))
-  
-  if(is.null(rawResponse)){
-    return(rawResponse)
+  if(is.null(seasonId)){
+    return(NULL)
   } else {
+    # Handling the default for not passing in a roundNo
+    if(missing(roundNumber)) roundNumber <- NULL else roundNumber 
     
-    # Extract content into list
-    listResponse <- fromJSON(content(rawResponse,'text'),flatten=TRUE)
+    # Hit endpoint
+    rawResponse  <- cdAPIresponse(endpoint = paste('leagues',leagueId,'levels',levelId,'seasons',seasonId,'ladder',roundNumber,sep = "/"), ...)
     
-    # Convert to DF
-    returnData   <- data.frame(listResponse)
-    
-    # Select exposed fields (getLadderExposedFields) & rename columns
-    returnData        <- returnData[, getLadderExposedFields]
-    names(returnData) <- names(getLadderExposedFields)
-    
-    return(returnData)
+    if(is.null(rawResponse)){
+      return(rawResponse)
+    } else {
+      
+      # Convert response to flat list
+      listResponse <- rawResponse %>% resp_body_json(simplifyVector = TRUE)
+      
+      # Convert list into DF
+      returnData <- listResponse %>% as.data.frame() %>% jsonlite::flatten()
+      
+      # Select exposed fields (getLadderExposedFields) & rename columns
+      returnData        <- returnData[, getLadderExposedFields]
+      names(returnData) <- names(getLadderExposedFields)
+      
+      return(returnData)
+    }
   }
 }
-  
+
 #'Squad List
 #'
 #'Get a list of squads participating in a season.
@@ -238,21 +243,45 @@ getLadder <- function(seasonId,roundNumber,leagueId=1,levelId=1,...){
 #'@return A data frame with a list of squads, with one row per squad.
 #'\itemize{
 #'    \item \code{season.id} A numerical identifier of a season.
-#'    \item \code{id} A unique numerical identifier of the squad.
-#'    \item \code{name} The name of the squad.
-#'    \item \code{code} A short code to represent the squad.
+#'    \item \code{squad.name} The name of the squad.
+#'    \item \code{squad.code} A short code to represent the squad.
+#'    \item \code{squad.id} A unique numerical identifier of the squad.
+#'    \item \code{state.name} (when \code{squadId} is provided) The name of the state that the given squad is based.
+#'    \item \code{state.code} (when \code{squadId} is provided) A short code representing the state that the given squad is based.
+#'    \item \code{state.id} (when \code{squadId} is provided) A unique numerical identifier representing the state that the given squad is based.
 #'}
 #'@examples
 #'getSquads(2022)
 #'getSquads()
 #'@export
-getSquads <- function(seasonId,leagueId=1,levelId=1,...){
-    if(missing(seasonId)) seasonId <- getCurrentSeason(leagueId,levelId,...)
-    cdAPI(paste('leagues',leagueId,'levels',levelId,'seasons',seasonId,'squads',sep='/'),...) %>%
-        select(season.id='seasonId',
-               id='squads.id',
-               name='squads.name',
-               code='squads.code')
+getSquads <- function(seasonId,leagueId=1,levelId=1,squadId,...){
+  
+  seasonId <- if(missing(seasonId)) getCurrentSeason(...) else seasonId
+  squadId  <- if(missing(squadId)) NULL else squadId            
+  
+  # Hit API
+  # rawResponse <- cdAPIresponse(endpoint = paste('leagues',leagueId,'levels',levelId,'seasons',seasonId,'squads',squadId,sep='/'), ...)
+  rawResponse <- cdAPIresponse(endpoint = paste('leagues',leagueId,'levels',levelId,'seasons',seasonId,'squads',squadId,sep='/'))
+  
+  if(is.null(rawResponse)){
+    return(rawResponse)
+  } else {
+    # Convert response to flat list
+    listResponse <- rawResponse %>% resp_body_json(simplifyVector = TRUE)
+    
+    # Convert list into DF
+    returnData <- listResponse %>% as.data.frame() %>% jsonlite::flatten()
+    
+    # If squadId is passed in, select the _squad exposed fields (which contain state. info) otherwise select the _all exposed fields
+    # NOTE: this is API behaviour, state info is in response if calling single squad, but otherwise not
+    squadExposedFields <- if(is.null(squadId)) getSquadsExposedFields_all else getSquadsExposedFields_squad
+    
+    # Select exposed fields (getFixtureExposedFields) & rename columns
+    returnData        <- returnData[, squadExposedFields ]
+    names(returnData) <- names(squadExposedFields)
+    
+    return(returnData)
+  }
 }
 
 #'Squad Details
@@ -277,14 +306,17 @@ getSquads <- function(seasonId,leagueId=1,levelId=1,...){
 #'getSquad(10,2022)
 #'getSquad(20)
 #'@export
-getSquad <- function(squadId,seasonId,leagueId=1,levelId=1,...){
-    if(missing(seasonId)) seasonId <- getCurrentSeason(leagueId,levelId,...)
-    cdAPI(paste('leagues',leagueId,'levels',levelId,'seasons',seasonId,'squads',squadId,sep='/'),...) %>%
-        select(season.id='seasonId',
-               id,name,code,
-               state.id='homeState.id',
-               state.name='homeState.name',
-               state.code='homeState.code')
+getSquad <- function(squadId,seasonId,leagueId=1,levelId=1,silenceWarning = FALSE,...){
+  
+  if(silenceWarning == F) message(paste0("\nWarning Message:\n--> This function has been superseded (will recieve no further development) as of cdAFLAPI v1.5.0\n--> It will be deprecated from all package releases post the end of the 2025 mens AFL season.\n--> Please pass a squadId to getSquads(squadId = [squadId] ) instead.\n\nTo silence this message, pass silenceWarning = TRUE to this function.")); 
+  
+  if(missing(seasonId)) seasonId <- getCurrentSeason(leagueId,levelId,...)
+  cdAPI(paste('leagues',leagueId,'levels',levelId,'seasons',seasonId,'squads',squadId,sep='/'),...) %>%
+    select(season.id='seasonId',
+           id,name,code,
+           state.id='homeState.id',
+           state.name='homeState.name',
+           state.code='homeState.code')
 }
 
 #'Squad Person List
@@ -298,19 +330,27 @@ getSquad <- function(squadId,seasonId,leagueId=1,levelId=1,...){
 #'@return A data frame with a list of persons for a squad, with one row per person.
 #'\itemize{
 #'    \item \code{season.id} A numerical identifier of a season.
-#'    \item \code{squad.id} A unique numerical identifier of the squad.
 #'    \item \code{squad.name} The name of the squad.
-#'    \item \code{id} A unique numerical identifier of a person.
+#'    \item \code{squad.code} A short code to represent the name of the squad.
+#'    \item \code{squad.id} A unique numerical identifier of the squad.
+#'    \item \code{fullname} The full name of the person.
+#'    \item \code{display} The person's display name, represented as first initial and surname.
 #'    \item \code{firstname} The person's first name.
 #'    \item \code{surname} The person's surname.
-#'    \item \code{name} The person's full name.
-#'    \item \code{display} The person's display name, represented as first initial and surname.
+#'    \item \code{id} A unique numerical identifier of a person.
+#'    \item \code{jumper.number} The jumper number worn on the players's uniform.
 #'    \item \code{position} The person's primary position within a season. The position where a player has spent most time.
 #'    \item \code{DOB} The person's date of birth (YYYY-MM-DD).
 #'    \item \code{age.season} The person's age in years at the start of the first game of the season, to one decimal place.
 #'    \item \code{age.year} The person's age at December 31 of the year in which the season ends, rounded down to a whole year.
+#'    \item \code{age.today} The person's age as of the current date, to one decimal place.
 #'    \item \code{height} The person's height in centimetres.
 #'    \item \code{weight} The person's weight in kilograms.
+#'    \item \code{position.long} The full text description of a players primary position within a season. (Eg. \code{'General Defender'})
+#'    \item \code{position} The person's primary position within a season in short form text. (Eg. \code{'Gen Def'})
+#'    \item \code{position.code} A short code to represent the players primary position within a season. (Eg. \code{'GD'})
+#'    \item \code{position.id} A unique numerical identifier to represent the players primary position within a season. 
+#'    \item \code{matches.season} The person's number of matches played for the given squad in the given season.id.
 #'}
 #'@examples
 #'getSquadPersons(10,2022)
@@ -318,33 +358,33 @@ getSquad <- function(squadId,seasonId,leagueId=1,levelId=1,...){
 #'@export
 getSquadPersons <- function(squad,seasonId,leagueId=1,levelId=1,...){
   
-  # If seasonId not supplied get/set current season as seasonId
+  # Handling the default for not passing in a seasonId
   if(missing(seasonId)) seasonId <- getCurrentSeason(leagueId,levelId,...)
   
+  # Handling if user has passed in a squad ID or squad NAME (id is required for the API call)
   if(is.numeric(squad)){
     squadId <- squad
   }else{
-    squadId <- getSquads(seasonId,leagueId,levelId,...) %>% subset(name==squad) %>% select(id) %>% pull()
+    squadId <- getSquads(seasonId,leagueId,levelId,...) %>% subset(squad.name==squad) %>% select(squad.id) %>% pull()
   }
   
-  cdAPI(paste('leagues',leagueId,'levels',levelId,'seasons',seasonId,'squads',squadId,'persons',sep='/'),...) %>%
-    mutate(weight = NA) %>% 
-    select(seasonId,
-           squad.name='name',
-           squad.id='id',
-           id='players.personId',
-           firstname='players.firstname',
-           surname='players.surname',
-           name='players.fullname',
-           jumper.no='players.jumperNumber',
-           display='players.displayName',
-           position='players.position.name',
-           DOB='players.dateOfBirth',
-           age.season='players.ageSeason',
-           age.year='players.ageYear',
-           height='players.height',
-           weight
-    )
+  rawResponse  <- cdAPIresponse(endpoint = paste('leagues',leagueId,'levels',levelId,'seasons',seasonId,'squads',squadId,'persons',sep='/') )
+  
+  # Convert response to flat list
+  listResponse <- rawResponse %>% resp_body_json(simplifyVector = TRUE)
+  
+  # Convert list into DF
+  returnData <- listResponse %>% as.data.frame() %>% jsonlite::flatten()
+  
+  # Add in weight as NA
+  returnData$weight <- NA
+  
+  # Select exposed fields (getSquadPersonsExposedFields) & rename columns
+  returnData        <- returnData[, getSquadPersonsExposedFields]
+  names(returnData) <- names(getSquadPersonsExposedFields)
+  
+  return(returnData)
+  
 }
 
 #'Squad Person Lists
@@ -380,7 +420,7 @@ getSquadLists <- function(seasonId,leagueId=1,levelId=1,...){
   if(missing(seasonId)) seasonId <- getCurrentSeason(leagueId,levelId,...)
   
   # Hit squads endpoint for list of all squadId's
-  squads <- getSquads(seasonId,leagueId,levelId,...) %>% select(id) %>% pull()
+  squads <- getSquads(seasonId,leagueId,levelId,...) %>% select(squad.id) %>% pull()
   
   # Empty object to bind to
   return <- NULL
@@ -392,3 +432,9 @@ getSquadLists <- function(seasonId,leagueId=1,levelId=1,...){
   return(return %>% arrange(squad.name,name))
   
 }
+
+
+
+
+
+

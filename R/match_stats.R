@@ -61,13 +61,14 @@
 #'@export
 getChains <- function(matchId,...){
   
+  # Hit endpoint for response
   rawResponse <- cdAPIresponse(matchId,paste('matches',matchId,'chains',sep='/'),...)
   
   if(is.null(rawResponse)){
     return(rawResponse)
   } else {
     # Convert response to flat list
-    listResponse <- fromJSON(content(rawResponse,'text'),flatten=TRUE)
+    listResponse <- rawResponse %>% resp_body_json(simplifyVector = TRUE)
     
     # Handle if successful response but no events happened yet (second element of list empty)
     if(is_empty(listResponse[[2]])) {
@@ -77,7 +78,7 @@ getChains <- function(matchId,...){
       return(returnData)
     } else {
       # Convert list into DF
-      returnData <- data.frame(listResponse)
+      returnData <- listResponse %>% as.data.frame() %>% jsonlite::flatten()
       
       # Get vector of the missing fields (IF ANY) in the call info
       missing <- setdiff(getChainsWhitelist,names(returnData))
@@ -85,7 +86,6 @@ getChains <- function(matchId,...){
       # Add on any of the missing columns in the response 
       returnData[missing] <- lapply(missing, function(x) rep(NA, nrow(returnData)))
     }
-    
     # Select exposed fields (getChainsExposedFields) & rename columns
     returnData        <- returnData[, getChainsExposedFields]
     names(returnData) <- names(getChainsExposedFields)
@@ -96,56 +96,118 @@ getChains <- function(matchId,...){
 
 #'Match Rotations
 #'
-#'Get a list of rotations for a match.
+#'Get a dataframe of rotations for a match.
 #'@param matchId A unique numerical identifier of a match.
 #'@param ... Arguments to be passed to internal functions, such as \code{envir} or \code{version}.
-#'@return A data frame with a list of rotations for the match, with one row per interchange move.
-#'\itemize{
+#'@return A data frame with all of the rotations for a given match. 
+#' \itemize{
 #'    \item \code{match.id} A unique numerical identifier of a match.
-#'    \item \code{id} The transaction ID of the interchange move, used for ordering chronologically.
-#'    \item \code{squad.id} A unique numerical identifier of the squad.
-#'    \item \code{squad.name} The name of the squad.
-#'    \item \code{squad.code} A short code to represent the squad.
-#'    \item \code{period} The period of the interchange move.
-#'    \item \code{secs} The elapsed time within the period of the interchange move.
-#'    \item \code{off.id} A unique numerical identifier of the player coming off the ground.
+#'    \item \code{squad.name} The name of the squad the rotation player belongs to.
+#'    \item \code{squad.code} A short code to represent the squad the rotation player belongs to.
+#'    \item \code{squad.id} A unique numerical identifier of the squad the rotation player belongs to.
+#'    \item \code{period} The period the rotation occured in.
+#'    \item \code{secs} The elapsed time within the period the rotation occured in.
+#'    \item \code{id} The transaction ID of the rotation, used for ordering chronologically.
 #'    \item \code{off.name} The full name of the player coming off the ground.
 #'    \item \code{off.display} The display name of the player coming off the ground, represented as first initial and surname.
-#'    \item \code{off.reason} The reason for the interchange move.
-#'    \item \code{off.code} A short text description of the reason for the interchange move.
-#'    \item \code{on.id} A unique numerical identifier of the player coming on the ground. Empty for start-of-match initialisation of the interchange bench.
+#'    \item \code{off.id} A unique numerical identifier of the player coming off the ground.
 #'    \item \code{on.name} The full name of the player coming on the ground. Empty for start-of-match initialisation of the interchange bench.
 #'    \item \code{on.display} The display name of the player coming on the ground, represented as first initial and surname. Empty for start-of-match initialisation of the interchange bench.
-#'}
+#'    \item \code{on.id} A unique numerical identifier of the player coming on the ground. Empty for start-of-match initialisation of the interchange bench.
+#'    \item \code{off.reason} The reason for the rotation  (ie.\code{'Regular' , 'Injured'}.)
+#'    \item \code{off.code} A short text description of the reason for the rotation (ie.\code{'REG' , 'INJ'}.)
+#'    \item \code{squad.name} (when \code{currentStints = TRUE}) The name of the squad a given players rotation stint belongs to.
+#'    \item \code{squad.code} (when \code{currentStints = TRUE}) A short code to represent the squad a given players rotation stint belongs to.
+#'    \item \code{squad.id} (when \code{currentStints = TRUE}) A unique numerical identifier of the squad a given players rotation stint belongs to.
+#'    \item \code{player.fullname} (when \code{currentStints = TRUE}) The full name of the player the rotation stint belongs to.
+#'    \item \code{player.display.name} (when \code{currentStints = TRUE}) The display name of the player the rotation stint belongs to, represented as first initial and surname.
+#'    \item \code{player.id} (when \code{currentStints = TRUE}) A unique numerical identifier of the player the rotation stint belongs to.
+#'    \item \code{current.stint.period} (when \code{currentStints = TRUE}) The period the given rotation stint occurred in.
+#'    \item \code{current.stint.period.secs} (when \code{currentStints = TRUE}) The period seconds value that the given rotation stint started
+#'    \item \code{current.stint.elapsed.secs} (when \code{currentStints = TRUE}) The elapsed seconds that the given stint has been going for. 
+#'    \item \code{current.stint.status} (when \code{currentStints = TRUE}) The status of the given rotation stint (ie.\code{'ON' , 'OFF'}.)
+#'    \item \code{current.stint.reason} (when \code{currentStints = TRUE}) The reason for the given rotation stint (ie.\code{'Regular' , 'Injured'}.)
+#'    \item \code{current.stint.reason.code} (when \code{currentStints = TRUE}) A short text description of the reason for the given rotation stint (ie.\code{'REG' , 'INJ'}.)
+#' }
 #'@examples
-#'getRotations(216085122)
+#'getRotations(matchId = 120390401)
 #'@export
-getRotations <- function(matchId,...){
-  temp <- cdAPI(paste('matches',matchId,'rotations',sep='/'),df=FALSE,...) 
-  r <- temp %>% content()
-  rotations <- r$rotations
-  if(length(rotations)==0) return(NULL)
-  trot <- do.call(bind_rows,lapply(rotations,unlist))
-  if(!'on.personId'%in%names(trot)) trot <- trot %>% mutate(on.personId=NA,on.fullname=NA,on.displayName=NA)
-  trot %>%
-    mutate(match.id=matchId) %>%
-    select(match.id,
-           id='matchTrxId',
-           squad.id,squad.name,squad.code,
-           period,secs='periodSecs',
-           off.id='off.personId',
-           off.name='off.fullname',
-           off.display='off.displayName',
-           off.reason='off.reason',
-           off.code='off.reasonCode',
-           on.id='on.personId',
-           on.name='on.fullname',
-           on.display='on.displayName')
+getRotations <- function(matchId, currentStints = FALSE, ...){
+  
+  # Hit endpoint for response
+  rawResponse <- cdAPIresponse(matchId, paste('matches',matchId,'rotations',sep='/'), ...) 
+  
+  if(is.null(rawResponse)){
+    return(rawResponse)
+  } else {
+    
+    # Convert response to flat list
+    listResponse <- rawResponse %>% resp_body_json(simplifyVector = TRUE)
+    
+    # If user wants the current stints...
+    if(currentStints == TRUE){
+      
+      # Home current stint
+      currentStintHome        <- as.data.frame(listResponse$home) %>% jsonlite::flatten()
+      # Away current stint
+      currentStintAway        <- as.data.frame(listResponse$away) %>% jsonlite::flatten()
+      
+      # Combine the home/away current stint dataframes
+      returnData              <- bind_rows(currentStintHome, currentStintAway)
+      
+      # Add matchId which isnt present in this layer of the response
+      returnData$match.id     <- listResponse$matchId
+      
+      # Get vector of the missing fields (IF ANY) in the call info
+      missing <- setdiff(getRotations_HomeAwayStintsExposedFields, names(returnData))
+      
+      # Add on any of the missing columns in the response 
+      returnData[missing] <- lapply(missing, function(x) rep(NA, nrow(returnData)))
+      
+      # Select exposed fields (getRotations_HomeAwayStintsExposedFields) & rename columns
+      returnData        <- returnData[, getRotations_HomeAwayStintsExposedFields]
+      names(returnData) <- names(getRotations_HomeAwayStintsExposedFields)
+      
+      # order by stint.status (off first, then on) and squad name (home squad first, then away)
+      returnData              <- returnData[order(factor(returnData$current.stint.status, levels = c("OFF","ON")) , 
+                                                  factor(returnData$squad.name, levels = c(currentStintHome$squad.name[1], currentStintAway$squad.name[1]))), ]
+      
+    } else {
+      
+      # Handle if successful response but no events happened yet (second element of list empty)
+      if(is_empty(listResponse$rotations)) {
+        returnData        <- data.frame(matrix(ncol = length(getRotationsWhitelist), nrow = 0))
+        names(returnData) <- getRotationsWhitelist
+        message(paste0("\nWarning:\n--> 0 rows of data in response.")) 
+        return(returnData)
+      }
+      # flatten into DF
+      returnData          <- listResponse$rotations %>% jsonlite::flatten()
+      
+      # Add matchId which isnt present in this layer of the response
+      returnData$match.id <- listResponse$matchId
+      
+      # Get vector of the missing fields (IF ANY) in the call info
+      missing             <- setdiff(getRotationsWhitelist,names(returnData))
+      
+      # Add on any of the missing columns in the response 
+      returnData[missing] <- lapply(missing, function(x) rep(NA, nrow(returnData)))
+      
+      # Select exposed fields (getShotsExposedFields) & rename columns
+      returnData          <- returnData[, getRotationsExposedFields]
+      names(returnData)   <- names(getRotationsExposedFields)
+      
+      # Order by trx.id
+      returnData          <- returnData[order(returnData$id), ]
+      
+    } # CLOSE // if-else (currentStints == TRUE)
+  } # CLOSE // if-else (is.null(rawResponse))
+  return(returnData)
 }
 
-#'Match Bench
-#'
-#'Get the current bench status of all players in a match.
+#' Match Bench
+#' 
+#' Get the current bench status of all players in a match.
 #'@param matchId A unique numerical identifier of a match.
 #'@param ... Arguments to be passed to internal functions, such as \code{envir} or \code{version}.
 #'@return A data frame with a list of all players for the match and their current bench status.
@@ -163,7 +225,10 @@ getRotations <- function(matchId,...){
 #'@examples
 #'getBench(216085122)
 #'@export
-getBench <- function(matchId,...){
+getBench <- function(matchId, silenceWarning = FALSE, ...){
+  
+  if(silenceWarning == F) message(paste0("\nWarning Message:\n--> This function has been superseded (will recieve no further development) as of cdAFLAPI v1.5.0\n--> It will be deprecated from all package releases post the end of the 2025 mens AFL season.\n--> Please use getRotations(currentStints = TRUE) instead.\n\nTo silence this message, pass silenceWarning = TRUE to this function.")); 
+  
   r <- cdAPI(paste('matches',matchId,'rotations',sep='/'),df=FALSE,...) %>%
     content()
   if(length(r$home$players)==0) return(NULL)
@@ -220,13 +285,14 @@ getBench <- function(matchId,...){
 #'@export
 getShots <- function(matchId,...){
   
+  # Hit endpoint for response
   rawResponse <- cdAPIresponse(endpoint = paste('matches',matchId,'shots',sep='/'),...)
   
   if(is.null(rawResponse)){
     return(rawResponse)
   } else {
     # Convert response to flat list
-    listResponse <- fromJSON(content(rawResponse,'text'),flatten=TRUE)
+    listResponse <- rawResponse %>% resp_body_json(simplifyVector = TRUE)
     
     # Handle if successful response but no events happened yet (second element of list empty)
     if(is_empty(listResponse[[2]])) {
@@ -236,7 +302,7 @@ getShots <- function(matchId,...){
       return(returnData)
     } else {
       # Convert list into DF
-      returnData <- data.frame(listResponse)
+      returnData <- listResponse %>% as.data.frame() %>% jsonlite::flatten()
       
       # Get vector of the missing fields (IF ANY) in the call info
       missing <- setdiff(getShotsWhitelist,names(returnData))
@@ -311,10 +377,10 @@ getSquadStats <- function(matchId, period, zone, context, metric, team, lastXsec
     return(rawResponse)
   } else {
     # Convert response to flat list
-    listResponse <- fromJSON(content(rawResponse, 'text'), flatten=TRUE)
+    listResponse <- rawResponse %>% resp_body_json(simplifyVector = TRUE)
     
     # Convert list into DF
-    returnData <- data.frame(listResponse)
+    returnData <- listResponse %>% as.data.frame() %>% jsonlite::flatten()
     
     # Continue to unnest    
     returnData <- returnData %>% 
@@ -394,10 +460,10 @@ getPlayerStats <- function(matchId, period, zone, metric, team, lastXseconds, fr
     return(rawResponse)
   } else {
     # Convert response to flat list
-    listResponse <- fromJSON(content(rawResponse, 'text'), flatten=TRUE)
+    listResponse <- rawResponse %>% resp_body_json(simplifyVector = TRUE)
     
     # Convert list into DF
-    returnData <- data.frame(listResponse)
+    returnData <- listResponse %>% as.data.frame() %>% jsonlite::flatten()
     
     # Continue to unnest    
     returnData <- returnData %>% 
@@ -457,16 +523,16 @@ getLeaders <- function(matchId,...){
   
   # Hit API
   rawResponse <- cdAPIresponse(matchId,paste('matches',matchId,'statistics/leaders',sep='/'),...)
-
+  
   if(is.null(rawResponse)){
     return(rawResponse)
   } else {
     
     # Convert response to flat list
-    listResponse <- fromJSON(content(rawResponse,'text'),flatten=TRUE)
+    listResponse <- rawResponse %>% resp_body_json(simplifyVector = TRUE)
     
     # Convert list into DF
-    returnData <- data.frame(listResponse)
+    returnData <- listResponse %>% as.data.frame() %>% jsonlite::flatten()
     
     # Unnest the list col containing data
     returnData <- returnData %>% 
@@ -498,25 +564,29 @@ getLeaders <- function(matchId,...){
 #'@return A data frame with a list of quarters and scores for each quarter.
 #'\itemize{
 #'    \item \code{match.id} A unique numerical identifier of a match.
-#'    \item \code{id} The transaction ID of the interchange move, used for ordering chronologically.
-#'    \item \code{home.id} A unique numerical identifier of the home squad.
+#'    \item \code{period} The period of the match.
 #'    \item \code{home.name} The name of the home squad.
 #'    \item \code{home.code} A short code to represent the home squad.
-#'    \item \code{away.id} A unique numerical identifier of the away squad.
-#'    \item \code{away.name} The name of the away squad.
-#'    \item \code{away.code} A short code to represent the away squad.
-#'    \item \code{period} The period of the match.
+#'    \item \code{home.id} A unique numerical identifier of the home squad.
 #'    \item \code{home.goals} Goals scored by the home squad.
 #'    \item \code{home.behinds} Behinds scored by the home squad.
 #'    \item \code{home.points} Points scored by the home squad.
-#'    \item \code{home.result} Period result for the home squad. W/L/D.
 #'    \item \code{home.margin} Scoreboard margin for the home squad.
+#'    \item \code{home.period.result} Period result for the home squad \code{Win/Loss/Draw}
+#'    \item \code{home.period.result.code} Period result code for the home squad \code{W/L/D}
+#'    \item \code{home.match.result} Match result for the home squad \code{W/L/D}
+#'    \item \code{away.name} The name of the away squad.
+#'    \item \code{away.code} A short code to represent the away squad.
+#'    \item \code{away.id} A unique numerical identifier of the away squad.
 #'    \item \code{away.goals} Goals scored by the away squad.
 #'    \item \code{away.behinds} Behinds scored by the away squad.
 #'    \item \code{away.points} Points scored by the away squad.
-#'    \item \code{away.result} Period result for the away squad. W/L/D.
 #'    \item \code{away.margin} Scoreboard margin for the away squad.
-#'    \item \code{winning.squad.id} The ID of the winning squad.
+#'    \item \code{away.period.result} Period result for the away squad \code{Win/Loss/Draw}
+#'    \item \code{away.period.result.code} Period result code for the away squad \code{W/L/D}
+#'    \item \code{away.match.result} Match result for the away squad \code{W/L/D}
+#'    \item \code{winning.squad.id.period} The squad ID of the winning squad for the given period.
+#'    \item \code{winning.squad.id.match} The squad ID of the winning squad for the match.
 #'    \item \code{cumulative} TRUE/FALSE based on the \code{cumulative} parameter passed to the function.
 #'}
 #'@examples
@@ -524,43 +594,43 @@ getLeaders <- function(matchId,...){
 #'getPeriodScores(216085122,cumulative=TRUE)
 #'@export
 getPeriodScores <- function(matchId,cumulative=FALSE,...){
-  temp <- cdAPI(paste('matches',matchId,'score',sep='/'),...)
-  if(is.null(temp)) return(NULL)
-  temp <- temp %>%
-    mutate(cumulative=cumulative,
-           home.result.cumulative=case_when(home.periods.marginCumulative>0~'W',
-                                            home.periods.marginCumulative<0~'L',
-                                            TRUE~'D'),
-           away.result.cumulative=case_when(home.periods.marginCumulative>0~'L',
-                                            home.periods.marginCumulative<0~'W',
-                                            TRUE~'D'),
-           winning.squad.period=case_when(home.periods.margin>0~home.id,
-                                          home.periods.margin<0~away.id,
-                                          TRUE~NA_integer_),
-           winning.squad.cumulative=case_when(home.periods.marginCumulative>0~home.id,
-                                              home.periods.marginCumulative<0~away.id,
-                                              TRUE~NA_integer_))
-  if(!'home.periods.resultCode'%in%names(temp)) temp <- temp %>% mutate(home.periods.resultCode=NA)
-  if(!'away.periods.resultCode'%in%names(temp)) temp <- temp %>% mutate(away.periods.resultCode=NA)
-  temp %>%
-    select(match.id='matchId',
-           home.id,home.name,home.code,
-           away.id,away.name,away.code,
-           period='home.periods.period',
-           home.goals=if_else(cumulative,'home.periods.goalsCumulative','home.periods.goals'),
-           home.behinds=if_else(cumulative,'home.periods.behindsCumulative','home.periods.behinds'),
-           home.points=if_else(cumulative,'home.periods.pointsCumulative','home.periods.points'),
-           home.result=if_else(cumulative,'home.result.cumulative','home.periods.resultCode'),
-           home.margin=if_else(cumulative,'home.periods.marginCumulative','home.periods.margin'),
-           away.goals=if_else(cumulative,'away.periods.goalsCumulative','away.periods.goals'),
-           away.behinds=if_else(cumulative,'away.periods.behindsCumulative','away.periods.behinds'),
-           away.points=if_else(cumulative,'away.periods.pointsCumulative','away.periods.points'),
-           away.result=if_else(cumulative,'away.result.cumulative','away.periods.resultCode'),
-           away.margin=if_else(cumulative,'away.periods.marginCumulative','away.periods.margin'),
-           winning.squad.id = if_else(cumulative,'winning.squad.cumulative','winning.squad.period'),
-           cumulative)
+  
+  rawResponse <- cdAPIresponse(endpoint = paste('matches',matchId,'score',sep='/'),...)
+  
+  if(is.null(rawResponse)){
+    return(rawResponse)
+  } else {
+    
+    # Convert response to flat list
+    listResponse <- rawResponse %>% resp_body_json(simplifyVector = TRUE)
+    
+    # Convert list into DF
+    returnData <- listResponse %>% as.data.frame() %>% jsonlite::flatten()
+    
+    # Get vector of the missing fields (IF ANY) in the call info
+    missing <- setdiff(getPeriodScoresWhitelist,names(returnData))
+    
+    # Add on any of the missing columns in the response 
+    returnData[missing] <- lapply(missing, function(x) rep(NA, nrow(returnData)))
+    
+    if(cumulative){
+      returnData        <- returnData[, getPeriodScoresExposedFields_cumulative]  
+      names(returnData) <- names(getPeriodScoresExposedFields_cumulative)
+    } else {
+      returnData        <- returnData[, getPeriodScoresExposedFields ]
+      names(returnData) <- names(getPeriodScoresExposedFields)
+    }
+    
+    # Engineered fields that always existed that need to be supported
+    returnData$"winning.squad.id.period" <- ifelse(returnData$home.margin > 0, returnData$home.id,
+                                            ifelse(returnData$home.margin < 0, returnData$away.id,NA_integer_))
+    returnData$"winning.squad.id.match"  <- ifelse(returnData$home.match.result == "Win" ,returnData$home.id,
+                                            ifelse(returnData$home.match.result == "Loss",returnData$away.id,NA_integer_))
+    returnData$"cumulative"              <- cumulative
+    
+    return(returnData)
+  }
 }
-
 
 #'Match Transactions
 #'
@@ -637,7 +707,7 @@ getMatchTransactions <- function(matchId,...){
   } else {
     
     # Convert response to flat list
-    listResponse <- fromJSON(content(rawResponse,'text'),flatten=TRUE)
+    listResponse <- rawResponse %>% resp_body_json(simplifyVector = TRUE)
     
     # Handle if successful response but no events happened yet (second element of list empty)
     if(is_empty(listResponse[[1]])) {
@@ -650,7 +720,7 @@ getMatchTransactions <- function(matchId,...){
     } else {
       
       # Convert list into DF
-      returnData <- data.frame(listResponse)
+      returnData <- listResponse %>% as.data.frame() %>% jsonlite::flatten()
       
       # strip 'transactions.' prefix
       names(returnData) <- gsub("^transactions\\.", "", names(returnData))
@@ -742,11 +812,11 @@ getMatchTransactions <- function(matchId,...){
 #'    \item \code{entry.source.name} The game situation relative to the origin of a team's possession that results in an entry.
 #'    \item \code{entry.source.type} Inside 50 entries where direct indicates the first chain after the specified entry.source.name 
 #'    
-#'    For centre bounce and midfield stoppage \code{entry.source.name}, direct indicates the entry was in the clearance chain \cr
+#'    - For centre bounce and midfield stoppage \code{entry.source.name}, direct indicates the entry was in the clearance chain \cr
 #'    
-#'    For repeat \code{entry.source.name}, direct indicates the entry was on the first turnover chain after an opposition rebound 50 \cr
+#'    - For repeat \code{entry.source.name}, direct indicates the entry was on the first turnover chain after an opposition rebound 50 \cr
 #'    
-#'    For transition \code{entry.source.name}, direct indicates the entry was in the same chain as the rebound 50
+#'    - For transition \code{entry.source.name}, direct indicates the entry was in the same chain as the rebound 50
 #'    \item \code{entry.kick.is.ground} For inside 50 entries that are kicks, was the entry from a ground kick (true/false).
 #'    \item \code{entry.kick.foot} For inside 50 entries that are kicks, which foot did the kicking player use.
 #'    \item \code{entry.kick.intent} For inside 50 entries that are kicks, the intent of the kicker. 
@@ -778,14 +848,14 @@ getMatchTransactions <- function(matchId,...){
 #'getEntries(216085122)
 #'@export
 getEntries <- function(matchId,...){
-  
+  # Hit API for response
   rawResponse <- cdAPIresponse(matchId,paste('matches',matchId,'entries',sep='/'),...)
   
   if(is.null(rawResponse)){
     return(rawResponse)
   } else {
     # Convert response to flat list
-    listResponse <- fromJSON(content(rawResponse,'text'),flatten=TRUE)
+    listResponse <- rawResponse %>% resp_body_json(simplifyVector = TRUE)
     
     # Handle if successful response but no events happened yet (second element of list empty)
     if(is_empty(listResponse[[2]])) {
@@ -795,7 +865,7 @@ getEntries <- function(matchId,...){
       return(returnData)
     } else {
       # Convert list into DF
-      returnData <- data.frame(listResponse)
+      returnData <- listResponse %>% as.data.frame() %>% jsonlite::flatten()
       
       # Get vector of the missing fields (IF ANY) in the call info
       missing <- setdiff(getEntriesWhitelist,names(returnData))
@@ -863,8 +933,8 @@ getSquadStatsPOST <- function(matchId, payload, info = FALSE, verbose = F, ...){
       message(paste0("\nSuccess [Status: ",rawResponse$status,"]\n--> POST request successful.")) # Communicate success
     }
     
-    # Formatting response - response as list
-    listResponse <- fromJSON(content(rawResponse,'text'),flatten=TRUE)
+    # Convert response to flat list
+    listResponse <- rawResponse %>% resp_body_json(simplifyVector = TRUE)
     
     # Extract data out of listResponse
     returnData <- listResponse[[1]] %>% 
@@ -965,14 +1035,14 @@ getPlayerStatsPOST <- function(matchId, payload, info = FALSE, verbose = FALSE, 
   } else {  
     
     if(verbose){
-      payloadDefaults(payload)                                                                  # Check if payload full, communicate defaults
+      payloadDefaults(payload)                                                                    # Check if payload full, communicate defaults
       message(paste0("\nSuccess [Status: ",rawResponse$status,"]\n--> POST request successful.")) # Communicate success
     }
     
-    # Formatting response - response as list
-    listResponse <- fromJSON(content(rawResponse,'text'),flatten=TRUE)
+    # Convert response to flat list
+    listResponse <- rawResponse %>% resp_body_json(simplifyVector = TRUE)
     
-    # unnest Down to players
+    # Unnest down to players
     returnData <- listResponse[[1]] %>% 
       tidyr::unnest("squads", names_sep = "_") %>%  
       tidyr::unnest("squads_players")
@@ -1268,7 +1338,7 @@ getSquadSummaryFile <- function(matchId,...) {
   
   # Hitting API for metadata
   rawResponse       <- cdAPIresponse(endpoint = paste('matches',matchId,sep='/'),...)
-  listResponse      <- fromJSON(content(rawResponse,'text'),flatten=TRUE)
+  if(is.null(rawResponse)) return(NULL); listResponse <- rawResponse %>% resp_body_json(simplifyVector = TRUE)
   matchDetails      <- as.data.frame(cbind(listResponse,listResponse$periods))[,matchDetailsCols]
   matchPeriodScores <- getPeriodScores(matchId)[,c("period","home.id","away.id","home.margin","away.margin")]
   
@@ -1448,7 +1518,6 @@ getSquadSummaryFile <- function(matchId,...) {
     mutate( INTERCEPT_OTHER              = INTERCEPT_OTHER + INTERCEPT_OTHER_KO) %>%
     select(-INTERCEPT_OTHER_KO) # this should not be required - double check (will be removed in line 222)
   
-  
   # Feature engineering
   returnData$MATCH_ID       <- matchDetails$id[1]
   returnData$SEASON_ID      <- matchDetails$seasonId[1]
@@ -1512,8 +1581,7 @@ getPlayerSummaryFile <- function(matchId,...) {
   
   # Hitting API for metadata
   rawResponse       <- cdAPIresponse(endpoint = paste('matches',matchId,sep='/'),...)
-
-  listResponse      <- fromJSON(content(rawResponse,'text'),flatten=TRUE)
+  if(is.null(rawResponse)) return(NULL); listResponse <- rawResponse %>% resp_body_json(simplifyVector = TRUE)
   matchDetails      <- as.data.frame(cbind(listResponse,listResponse$periods))[,matchDetailsCols]
   matchPeriodScores <- getPeriodScores(matchId)[,c("period","home.id","away.id","home.margin","away.margin")]
   
@@ -1772,15 +1840,15 @@ getPlayerSummaryFile <- function(matchId,...) {
 #'@export
 getStoppages <- function(matchId, stoppageAttendees=FALSE,...){
   
-  # Hit stoppage endpoint for response
-  rawResponse <- cdAPIresponse(endpoint = paste('matches',matchId,'stoppages',sep='/'), ...)
+  # Hit endpoint for response
+  rawResponse <- cdAPIresponse(matchId, paste('matches',matchId,'stoppages',sep='/'), ...) 
   
   if(is.null(rawResponse)){
     return(rawResponse)
   } else {
     
     # Convert response to flat list
-    listResponse <- fromJSON(content(rawResponse,'text'),flatten=TRUE)
+    listResponse <- rawResponse %>% resp_body_json(simplifyVector = TRUE)
     
     # Handle if successful response but no events happened yet (second element of list empty)
     if(is_empty(listResponse[[1]])) {
@@ -1791,7 +1859,7 @@ getStoppages <- function(matchId, stoppageAttendees=FALSE,...){
     } else {
       
       # Convert list into DF
-      returnData <- data.frame(listResponse)
+      returnData <- listResponse %>% as.data.frame() %>% jsonlite::flatten()
       
       # Get length of stoppages.attendance.players list - if empty skip the below as there are no attendees to return regardless of if stoppageAttendees = T
       attendLength <- length(unlist(returnData$stoppages.attendance.players[1]))
@@ -1850,6 +1918,7 @@ getStoppages <- function(matchId, stoppageAttendees=FALSE,...){
     return(returnData)
   } # close rawResponse is not NULL
 } 
+
 
 
 

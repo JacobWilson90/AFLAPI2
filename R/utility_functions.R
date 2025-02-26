@@ -1,29 +1,28 @@
-#'to_minsec
+#' Minute:Second display
 #'
 #'Convert an integer of seconds elapsed to a text string with minutes and seconds.
 #'@param x Seconds, as an integer.
 #'@param leadingZero Logical. Add a leading zero to minute values less than 10?
-#'@return A text string in the form "MI:SS" - eg. "9:54" if @param leadingZero is FALSE, "09:54" if @param leadingZero is TRUE.
+#'@return A text string in the form "MI:SS" (Eg. "9:54" if \code{leadingZero = FALSE} "09:54" if \code{leadingZero = TRUE})
 #'@examples
 #'to_minsec(594)
 #'@export
 to_minsec <- function(x,leadingZero=FALSE){
-  require(tidyverse)
   mins <- floor(x/60)
   secs <- x %% 60
   if(leadingZero){
-    mins_fill <- if_else(mins<10,paste("0",mins,sep=''),as.character(mins))
+    mins_fill <- dplyr::if_else(mins<10,paste("0",mins,sep=''),as.character(mins))
   }else{
     mins_fill <- mins
   }
-  secs_fill <- if_else(secs<10,paste("0",secs,sep=''),as.character(secs))
-  output <- paste(mins_fill,secs_fill,sep=':')
+  secs_fill <- dplyr::if_else(secs<10,paste("0",secs,sep=''),as.character(secs))
+  output    <- paste(mins_fill,secs_fill,sep=':')
   return(output)
 }
 
-#' Helper to create payloads for getPlayerStatsPOST() and getSquadStatsPOST() functions.
+#' Create POST endpoint payload
 #'
-#'Create a payload for \code{getPlayerStatsPOST()} and \code{getSquadStatsPOST()} functions.
+#'Helper function to create a payload(s) for \code{getPlayerStatsPOST()} and \code{getSquadStatsPOST()} functions.
 #'@param endpoint A string of either "player" or "squad" dictating the POST endpoint the payload is being built for.
 #'@param list(s) Pass in any number of single lists to be combined into one payload.
 #'@return A nested list in the correct structure to pass into payload arguments of \code{getPlayerStatsPOST()} and \code{getSquadStatsPOST()}

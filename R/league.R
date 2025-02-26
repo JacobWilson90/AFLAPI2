@@ -98,14 +98,19 @@ getLeagueLevel <- function(leagueId=1,levelId=1,...){
 #'getCurrentSeason()
 #'@export
 getCurrentSeason <- function(leagueId=1,levelId=1,...){
-    cdAPI(paste('leagues',leagueId,'levels',levelId,sep='/'),...) %>%
-    select(currentSeason.seasonId) %>%
-    rename(season.id=currentSeason.seasonId) %>%
-    select(season.id) %>%
-    pull()
+  # Get response from API
+  rawResponse <- cdAPIresponse(endpoint = paste('leagues',leagueId,'levels',levelId,sep='/'),...)
+  
+  # If null, return whats returned by rawResponse
+  if(is.null(rawResponse)){
+    return(rawResponse)
+  } else {
+    # Convert response to flat list
+    listResponse <- rawResponse %>% resp_body_json(simplifyVector = TRUE)
+    # Return
+    return(listResponse$currentSeason$seasonId)
+  }
 }
-
-
 
 
 

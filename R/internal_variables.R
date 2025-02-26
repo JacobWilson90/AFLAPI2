@@ -1,3 +1,13 @@
+####################
+   # Variables #
+####################
+
+#'userAgentHeader 
+#'
+#' The user-agent header used in API request(s) to ID the call has come from the R package, alongside which version number.
+#'@keywords internal
+userAgentHeader <- paste0("RPackage/v",read.dcf(system.file("DESCRIPTION", package = "cdAFLAPI"))[1, "Version"])
+
 #' getSeasonWhitelist
 #'
 #' This vector contains all the possible columns that can be returned by hitting the endpoint within the getSeason function.
@@ -384,33 +394,65 @@ getSquadStatsMissingFields <- c('squads.statistics_code', 'squads.statistics_nam
 #'
 #' This vector contains all the possible columns that can be returned by hitting the endpoint within the getRotations function.
 #' @keywords internal
-getRotationsWhitelist <- c('matchTrxId'  , 'period'         , 'periodSecs',
-                           'squad.name'  , 'squad.code'     , 'squad.id', 
-                           'off.reason'  , 'off.reasonCode' ,
-                           'off.fullname', 'off.displayName', 'off.personId',
-                           'on.fullname' , 'on.displayName' , 'on.personId'
-                           )
+getRotationsWhitelist <- c(
+  "match.id"  , 
+  "matchTrxId",
+  "period",
+  "periodSecs",
+  "off.reason",
+  "off.reasonCode",
+  "off.displayName",
+  "off.fullname",
+  "off.personId",
+  "squad.code",
+  "squad.id",
+  "squad.name",
+  "on.displayName",
+  "on.fullname",
+  "on.personId"
+)
+
 
 #' getRotationsExposedFields
 #'
 #' This vector contains all the fields we're exposing in the getRotations function and their equivalent renames.
 #' @keywords internal
-getRotationsExposedFields <- c(match.id   = 'match.id',
-                               trx.id     = 'matchTrxId',
-                               period     = 'period',
-                               secs       = 'periodSecs',
-                               squad.name = 'squad.name',
-                               squad.code = 'squad.code',
-                               squad.id   = 'squad.id',
-                               off.reason = 'off.reason',
-                               off.code   = 'off.reasonCode',
-                               off.name   = 'off.fullname',
-                               off.display= 'off.displayName',
-                               off.id     = 'off.personId',
-                               on.name    = 'on.fullname',
-                               on.display = 'on.displayName',
-                               on.id      = 'on.personId'
-                               )
+getRotationsExposedFields <- c(
+  match.id                  = "match.id"   , 
+  squad.name                = "squad.name" ,
+  squad.code                = "squad.code" ,
+  squad.id                  = "squad.id"   ,
+  period                    = "period"     ,     # CHANGE: match.period              = "period"    ,
+  secs                      = "periodSecs" ,     # CHANGE: match.period.secs         = "periodSecs",
+  id                        = "matchTrxId" ,     # CHANGE: trx.id                    = "matchTrxId" ,
+  off.name                  = "off.fullname"   , # CHANGE: off.player.fullname       = "off.fullname"   ,
+  off.display               = "off.displayName", # CHANGE: off.display.name          = "off.displayName",
+  off.id                    = "off.personId"   , # CHANGE: off.player.id             = "off.personId"   ,
+  on.name                   = "on.fullname"    , # CHANGE: on.player.fullname        = "on.fullname"    ,
+  on.display                = "on.displayName" , # CHANGE: on.display.name           = "on.displayName" ,
+  on.id                     = "on.personId"    , # CHANGE: on.player.id              = "on.personId"    , 
+  off.reason                = "off.reason"     , # CHANGE: rotation.off.reason       = "off.reason"     ,
+  off.code                  = "off.reasonCode"   # CHANGE: rotation.off.reason.code  = "off.reasonCode"
+)
+
+#' getRotations_HomeAwayStintsExposedFields
+#'
+#' This vector contains all the fields we're exposing in the getRotations function when currentStints = TRUE and their equivalent renames.
+#' @keywords internal
+getRotations_HomeAwayStintsExposedFields <- c(
+  squad.name                      = "squadName",
+  squad.code                      = "squadCode",
+  squad.id                        = "squadId",
+  player.fullname                 = "players.fullname",
+  player.display.name             = "players.displayName",
+  player.id                       = "players.personId",
+  current.stint.period            = "players.currentStint.period",
+  current.stint.start.period.secs = "players.currentStint.periodSecs",
+  current.stint.elapsed.secs      = "players.currentStint.elapsedSecs",
+  current.stint.status            = "players.currentStint.status",
+  current.stint.reason            = "players.currentStint.reason",
+  current.stint.reason.code       = "players.currentStint.reasonCode"
+)
 
 #' getSquadStatsPOSTExposedFields
 #'
@@ -486,26 +528,26 @@ getPlayerStatsPOST_info_ExposedFields <- c(info.metric.codes = "metricCodes",
 #' @keywords internal
 getPlayerStatsPOST_info_Whitelist <- c("metricCodes","periods","team","zones","lastXSeconds")
 
-#' getLeagueInfo_leagueLevelCombos
-#'
-#' This vector contains all the possible combinations of league and level in order to gather all info in getLeagueInfo function.
-#' @keywords internal
-getLeagueInfo_leagueLevelCombos <- expand.grid(leagueId = 1:3, levelId = 1)
-
-#' getLeagueInfoExposedFields
-#'
-#' This vector contains all the fields we're exposing in the getLeagueInfoExposedFields function and their equivalent renames.
-#' @keywords internal
-getLeagueInfoExposedFields <- c(current.season.id = "currentSeason.seasonId",
-                                level.id          = "id",
-                                league.id         = "league.id", 
-                                level.name        = "name",
-                                league.name       = "league.name",
-                                level.code        = "code" , 
-                                league.code       = "league.code",
-                                league.gender     = "league.gender",
-                                competition.id    = "currentSeason.competitionId",
-                                championship.id   = "currentSeason.championshipId")
+#' #' getLeagueInfo_leagueLevelCombos
+#' #'
+#' #' This vector contains all the possible combinations of league and level in order to gather all info in getLeagueInfo function.
+#' #' @keywords internal
+#' # getLeagueInfo_leagueLevelCombos <- expand.grid(leagueId = 1:3, levelId = 1)
+#' 
+#' #' getLeagueInfoExposedFields
+#' #'
+#' #' This vector contains all the fields we're exposing in the getLeagueInfoExposedFields function and their equivalent renames.
+#' #' @keywords internal
+#' getLeagueInfoExposedFields <- c(current.season.id = "currentSeason.seasonId",
+#'                                 level.id          = "id",
+#'                                 league.id         = "league.id", 
+#'                                 level.name        = "name",
+#'                                 league.name       = "league.name",
+#'                                 level.code        = "code" , 
+#'                                 league.code       = "league.code",
+#'                                 league.gender     = "league.gender",
+#'                                 competition.id    = "currentSeason.competitionId",
+#'                                 championship.id   = "currentSeason.championshipId")
 
 #' getMatchWhitelist
 #'
@@ -522,9 +564,9 @@ getMatchWhitelist <- c(
   'status.typeId', 'status.typeName', 'status.remainingSecs', 'status.remainingTime', 'status.remainingDisplay',
   'home.score.goals', 'home.score.behinds', 'home.score.points',
   'away.score.goals', 'away.score.behinds', 'away.score.points', 'winningSquadId', 'result',
-  'resultCode', 'coinToss.winningSquadId', 'coinToss.decision', 'attendance' , 'statisticUpdate'
+  'resultCode', 'coinToss.winningSquadId', 'coinToss.decision', 'attendance' , 'statisticUpdate' , 
+  "time.utcMatchStartActual", "time.utcMatchEndActual", "time.periodSecs" , "time.duration"          
 )
-
 
 #' getMatchExposedFields
 #'
@@ -541,7 +583,6 @@ getMatchExposedFields <- c(
   match.id                     = 'id',
   match.name                   = 'name',
   match.code                   = 'code',
-  match.start                  = 'date.utcMatchStart',
   match.date                   = 'date.startDate',
   match.time                   = 'date.startTime',
   home.id                      = 'home.id',
@@ -577,8 +618,36 @@ getMatchExposedFields <- c(
   coin.toss.winning.squad.id   = 'coinToss.winningSquadId',
   coin.toss.direction.decision = 'coinToss.decision',
   attendance                   = 'attendance',
-  statistic.update             = 'statisticUpdate'
+  match.start.scheduled        = 'date.utcMatchStart',
+  match.start.actual           = 'time.utcMatchStartActual',
+  match.end.actual             = 'time.utcMatchEndActual',
+  match.total.period.secs      = 'time.periodSecs',
+  match.total.duration         = 'time.duration' , 
+  statistic.update             = 'statisticUpdate' 
 )
+
+#' getMatch_PeriodsWhitelist
+#'
+#' This vector contains all the possible fields in the getMatch function when periods = TRUE
+#' @keywords internal
+getMatch_PeriodsWhitelist <- c(
+  'period', 'utcPeriodStart', 'utcPeriodEnd', 'periodSecs'
+)
+
+#' getMatch_PeriodsExposedFields
+#'
+#' This vector contains all the fields we're exposing in the getMatch function when periods = TRUE and their equivalent renames.
+#' @keywords internal
+getMatch_PeriodsExposedFields <- c(
+  match.id     = 'match.id' , 
+  period       = 'period',
+  period.secs  = 'periodSecs',
+  period.start = 'utcPeriodStart',
+  period.end   = 'utcPeriodEnd'
+)
+
+
+
 
 #' getTRXfile_chainsFields
 #'
@@ -837,88 +906,84 @@ getVenueExposedFields <- c(match.id='matchId',
                            length='dimensions.length',
                            width='dimensions.width')
 
-#' getMatchPersons_awayWhitelist
-#'
-#' This vector contains all the possible columns in the getMatchPersons() function for when the *AWAY* team is split out.
-#' @keywords internal
-getMatchPersons_awayWhitelist <- c(
-  "away.players.dateOfBirth", "away.players.matchAge", "away.players.height"      ,
-  "away.players.firstname"  , "away.players.surname" , "away.players.jumperNumber",
-  "away.players.displayName", "away.players.fullname", "away.players.personId"    ,
-  "away.players.positions.selected.id"  , "away.players.positions.selected.code", 
-  "away.players.positions.selected.name", "away.players.positions.season.id"    , 
-  "away.players.positions.season.code"  , "away.players.positions.season.name"  ,
-  "away.code", "away.id", "away.name")
 
-#' getMatchPersons_homeWhitelist
+
+
+
+
+
+#' getMatchPersons_Whitelist
 #'
-#' This vector contains all the possible columns in the getMatchPersons() function for when the *HOME* team is split out.
+#' This vector contains all the possible columns in the getMatchPersons() function 
 #' @keywords internal
-getMatchPersons_homeWhitelist <- c(
-  "home.players.dateOfBirth", "home.players.matchAge", "home.players.height"      ,
-  "home.players.firstname"  , "home.players.surname" , "home.players.jumperNumber",
-  "home.players.displayName", "home.players.fullname", "home.players.personId"    ,
-  "home.players.positions.selected.id"  , "home.players.positions.selected.code", 
-  "home.players.positions.selected.name", "home.players.positions.season.id"    , 
-  "home.players.positions.season.code"  , "home.players.positions.season.name"  ,
-  "home.code", "home.id", "home.name"
+getMatchPersons_Whitelist <- c(
+  "players.dateOfBirth", "players.matchAge", "players.height"      ,
+  "players.firstname"  , "players.surname" , "players.jumperNumber",
+  "players.displayName", "players.fullname", "players.personId"    ,
+  "players.positions.selected.id"  , "players.positions.selected.code", 
+  "players.positions.selected.name", "players.positions.season.id"    , 
+  "players.positions.season.code"  , "players.positions.season.name"  ,
+  "code", "id", "name"
 )
 
 #' getMatchPersons_officialsWhitelist
 #'
 #' This vector contains all the possible columns in the getMatchPersons() function for the officials portion of the response (officials param == TRUE).
 #' @keywords internal
-getMatchPersons_officialsWhitelist <- c("personId", "fullname", "displayName", "jumperNumber", 
+getMatchPersons_officialsWhitelist <- c("match.id", "personId", "fullname", "displayName", "jumperNumber", 
                                         "positions.selected.id", "positions.selected.name", "positions.selected.code")
 
 #' getMatchPersons_officialsExposedFields
 #'
 #' This vector contains all the fields we're exposing in the getMatchPersons function and their equivalent renames for the officials portion of the response (officials param == TRUE).
 #' @keywords internal
-getMatchPersons_officialsExposedFields <- c(person.id      = "personId",
-                                            person.name    = "fullname",
-                                            person.display = "displayName", 
-                                            jumper         = "jumperNumber", 
-                                            selected.id    = "positions.selected.id",
-                                            selected.name  = "positions.selected.name",
-                                            selected.code  = "positions.selected.code")
+getMatchPersons_officialsExposedFields <- c(match.id       = 'match.id',
+                                            person.name    = "fullname",                # CHANGE: official.name          = 'fullname',
+                                            person.display = "displayName",             # CHANGE: official.display.name  = 'displayName',
+                                            person.id      = "personId",                # CHANGE: official.id            = 'personId',
+                                            jumper         = "jumperNumber",            # CHANGE: official.jumper.no     = 'jumperNumber',
+                                            selected.id    = "positions.selected.id",   # CHANGE: selected.position.id   = 'positions.selected.id',
+                                            selected.name  = "positions.selected.name", # CHANGE: selected.position.name = 'positions.selected.name',
+                                            selected.code  = "positions.selected.code") # CHANGE: selected.position.code = 'positions.selected.code'
 #' getMatchPersons_officialsDF
 #'
 #' This is the empty dataframe returned in the response when officials param of getMatchPersons() is set to TRUE, but there are no officials in the response (ie. for AFLW matches where officials arent recorded).
 #' @keywords internal
-getMatchPersons_officialsDF <- data.frame("person.id"      = character(),
-                                          "person.name"    = character(),
-                                          "person.display" = character(),
-                                          "jumper"         = character(),
-                                          "selected.id"    = character(),
-                                          "selected.name"  = character(),
-                                          "selected.code"  = character(),
+getMatchPersons_officialsDF <- data.frame("match.id"       = character(),
+                                          "person.name"    = character(), # CHANGE: "official.name"          = character(),
+                                          "person.display" = character(), # CHANGE: "official.display.name"  = character(),
+                                          "person.id"      = character(), # CHANGE: "official.id"            = character(),
+                                          "jumper"         = character(), # CHANGE: "official.jumper.no"     = character(),
+                                          "selected.id"    = character(), # CHANGE: "selected.position.id"   = character(),
+                                          "selected.name"  = character(), # CHANGE: "selected.position.name" = character(),
+                                          "selected.code"  = character(), # CHANGE: "selected.position.code" = character(),
                                           stringsAsFactors = FALSE)
+
 #' getMatchPersonsExposedFields
 #'
 #' This vector contains all the fields we're exposing in the getMatchPersonsExposedFields function and their equivalent renames.
 #' @keywords internal
 getMatchPersonsExposedFields <- c(
-  match.id = "match.id",
-  squad.id = 'id',
-  squad.name  = 'name', 
-  squad.code  = 'code',
-  person.id   = 'personId', 
-  person.name = 'fullname', 
-  person.firstname = 'firstname',
-  person.surname   = 'surname',
-  person.display   = 'displayName',
-  jumper        = 'jumperNumber',
-  selected.id   = 'positions.selected.id',
-  selected.name = 'positions.selected.name',
-  selected.code = 'positions.selected.code',
-  position.id   = 'positions.season.id',
-  position.name = 'positions.season.name',
-  position.code = 'positions.season.code',
-  height = "height", 
-  weight = "weight",
-  DOB    = 'dateOfBirth', 
-  age    = 'matchAge'
+  match.id         = "match.id",
+  squad.name       = 'name', 
+  squad.code       = 'code',
+  squad.id         = 'id',
+  person.name      = 'players.fullname',                 # CHANGE: player.fullname  = 'players.personId',
+  person.firstname = 'players.firstname',                # CHANGE: player.firstname = 'players.personId',
+  person.surname   = 'players.surname',                  # CHANGE: player.surname   = 'players.personId',
+  person.display   = 'players.displayName',              # CHANGE: player.display.name = 'players.personId', 
+  person.id        = 'players.personId',                 # CHANGE: player.id        = 'players.personId',
+  jumper           = 'players.jumperNumber',             # CHANGE: player.jumper.no = 'players.personId', 
+  selected.id      = 'players.positions.selected.id',    # CHANGE: selected.position.id = 'players.personId',
+  selected.name    = 'players.positions.selected.name',  # CHANGE: selected.position.name = 'players.personId',
+  selected.code    = 'players.positions.selected.code',  # CHANGE: selected.position.code = 'players.personId',
+  position.id      = 'players.positions.season.id',      
+  position.name    = 'players.positions.season.name',
+  position.code    = 'players.positions.season.code',
+  height           = "players.height", 
+  weight           = "weight",
+  DOB              = 'players.dateOfBirth', 
+  age              = 'players.matchAge'
 )
 
 #' getLeadersWhitelist
@@ -2394,27 +2459,27 @@ playerSummaryFile_lookup <- data.frame("SF_METRIC_CODE"     = playerSummaryFileM
 #' This vector contains all of the fields we're exposing in the getSquadPersons() function
 #' @keywords internal
 getSquadPersonsExposedFields <- c(
-  seasonId             = "seasonId",
+  season.id            = "seasonId",
   squad.name           = "name" , 
   squad.code           = "code",
   squad.id             = "id",
-  fullname             = "players.fullname",
-  display.name         = "players.displayName",
-  firstname            = "players.firstname",
-  surname              = "players.surname",
-  player.id            = "players.personId",
-  jumper.number        = "players.jumperNumber",
-  DOB                  = "players.dateOfBirth",
-  age.season           = "players.ageSeason",
-  age.year             = "players.ageYear",
-  age.today            = "players.ageToday",
-  height               = "players.height",
-  weight               = "weight" ,                       # Not in API response - added as NA
-  position.long        = "players.position.description",
-  position.short       = "players.position.name",         # BREAKING: Name change
-  position.code        = "players.position.code",
-  position.id          = "players.position.id",
-  matches.season       = "players.matches.season"
+  name          = "players.fullname" ,    # CHANGE: fullname      = "players.fullname",
+  display       = "players.displayName",  # CHANGE: display.name  = "players.displayName",
+  firstname     = "players.firstname",
+  surname       = "players.surname",
+  id            = "players.personId",     # CHANGE: player.id            = "players.personId",
+  jumper.no     = "players.jumperNumber", 
+  DOB           = "players.dateOfBirth" , 
+  age.season    = "players.ageSeason" ,   
+  age.year      = "players.ageYear",
+  age.today     = "players.ageToday",
+  height        = "players.height",
+  weight        = "weight" ,                       
+  position.long = "players.position.description",
+  position      = "players.position.name" ,        # CHANGE: position.short = "players.position.name" 
+  position.code = "players.position.code",
+  position.id   = "players.position.id",
+  player.matches.season= "players.matches.season"
 )
 
 
@@ -2442,21 +2507,21 @@ getPeriodScoresWhitelist <- c(
 #' This vector contains all of the fields we're exposing when cumulative = TRUE in the getPeriodScore() function
 #' @keywords internal
 getPeriodScoresExposedFields_cumulative <- c(
-  match.id     = 'matchId',
-  home.id      = 'home.id',
+  match.id           = 'matchId',
+  period             = 'home.periods.period',
   home.name    = 'home.name',
   home.code    = 'home.code',
-  away.id      = 'away.id',
-  away.name    = 'away.name',
-  away.code    = 'away.code',
-  period       = 'home.periods.period',
+  home.id      = 'home.id',
   home.goals   = 'home.periods.goalsCumulative',
   home.behinds = 'home.periods.behindsCumulative',
   home.points  = 'home.periods.pointsCumulative',
   home.margin  = 'home.periods.marginCumulative',
   home.period.result      = 'home.periods.result' , 
-  home.period.result.code = 'home.periods.resultCode' , # BREAKING: 
+  home.period.result.code = 'home.periods.resultCode' ,
   home.match.result       = 'home.result' , 
+  away.name    = 'away.name',
+  away.code    = 'away.code',
+  away.id      = 'away.id',
   away.goals   = 'away.periods.goalsCumulative',
   away.behinds = 'away.periods.behindsCumulative',
   away.points  = 'away.periods.pointsCumulative',
@@ -2472,13 +2537,10 @@ getPeriodScoresExposedFields_cumulative <- c(
 #' @keywords internal
 getPeriodScoresExposedFields <- c(
   match.id     = 'matchId',
-  home.id      = 'home.id',
+  period       = 'home.periods.period',
   home.name    = 'home.name',
   home.code    = 'home.code',
-  away.id      = 'away.id',
-  away.name    = 'away.name',
-  away.code    = 'away.code',
-  period       = 'home.periods.period',
+  home.id      = 'home.id',
   home.goals   = 'home.periods.goals',
   home.behinds = 'home.periods.behinds',
   home.points  = 'home.periods.points',
@@ -2486,6 +2548,9 @@ getPeriodScoresExposedFields <- c(
   home.period.result      = 'home.periods.result',
   home.period.result.code = 'home.periods.resultCode' ,
   home.match.result       = 'home.result' , 
+  away.name    = 'away.name',
+  away.code    = 'away.code',
+  away.id      = 'away.id',
   away.goals   = 'away.periods.goals',
   away.behinds = 'away.periods.behinds',
   away.points  = 'away.periods.points',
@@ -2494,12 +2559,6 @@ getPeriodScoresExposedFields <- c(
   away.period.result.code = 'away.periods.resultCode' ,
   away.match.result       = 'away.result' 
 )
-
-
-
-##########################################
-
-
 
 #' getStoppagesWhitelist
 #'
@@ -2641,3 +2700,163 @@ getStoppages_awayNames <- c(
   "stoppage.attendance.away.displayname4", 
   "stoppage.attendance.away.personId4" 
 )
+
+#' getFixtureWhitelist
+#'
+#' This vector contains all of the fields in the getFixture() function
+#' @keywords internal
+getFixtureWhitelist <- c(
+  "competitionCode", "competitionId", "competitionName", "competitionType",
+  "endDate", "endYear", "firstMatchStart", "code",
+  "id", "matches.id", "matches.roundOrder", "matches.winningSquadId",
+  "name", "number", "phaseNumber", "phases.id",
+  "phases.name", "phases.code", "seasonId", "startDate",
+  "startYear", "matches.squads.away.code", "matches.squads.away.id", "matches.squads.away.name",
+  "matches.squads.away.score.goals", "matches.squads.away.score.behinds", "matches.squads.away.score.points", "matches.squads.home.code",
+  "matches.squads.home.id", "matches.squads.home.name", "matches.squads.home.score.goals", "matches.squads.home.score.behinds",
+  "matches.squads.home.score.points", "matches.date.startDate", "matches.date.startTime", "matches.date.utcMatchStart",
+  "matches.status.period", "matches.status.periodSecs", "matches.status.periodDisplay", "matches.status.remainingSecs",
+  "matches.status.remainingDisplay", "matches.status.remainingTime", "matches.status.id", "matches.status.name",
+  "matches.status.code", "matches.status.typeId", "matches.status.typeName", "matches.type.id",
+  "matches.type.name", "matches.type.code", "matches.venue.id", "matches.venue.code",
+  "matches.venue.name", "matches.venue.timeZone"
+)
+
+#' getFixtureExposedFields
+#'
+#' This vector contains all of the fields we're exposing in the getFixture() function
+#' @keywords internal
+getFixtureExposedFields <- c(
+  competition.name              = "competitionName", 
+  competition.code              = "competitionCode", 
+  competition.id                = "competitionId", 
+  season.id                     = "seasonId", 
+  season.start.date             = "startDate", 
+  season.end.date               = "endDate", 
+  round.phaseNumber             = "phaseNumber",                         # CHANGE: phase.round.number            = "phases.rounds_phaseNumber",
+  phase.name                    = "phases.name",
+  phase.code                    = "phases.code",
+  phase.id                      = "phases.id", 
+  round.number                  = "number",
+  round.name                    = "name",
+  round.code                    = "code",
+  round.id                      = "id",
+  venue.name                    = "matches.venue.name",
+  venue.code                    = "matches.venue.code",
+  venue.id                      = "matches.venue.id",
+  venue.timezone                = "matches.venue.timeZone", 
+  match.id                      = "matches.id",
+  type.name                     = "matches.type.name",                    # CHANGE: match.type.name               = "type.name", 
+  match.type.code               = "matches.type.code", 
+  match.type.id                 = "matches.type.id", 
+  match.order                   = "matches.roundOrder" ,                  # CHANGE: match.round.order             = "roundOrder",
+  match.date                    = "matches.date.startDate",               # CHANGE: match.start.date              = "date.startDate", 
+  match.time                    = "matches.date.startTime",               # CHANGE: match.start.time              = "date.startTime", 
+  match.start                   = "matches.date.utcMatchStart",           # CHANGE: match.start.UTC               = "date.utcMatchStart",
+  status.name                   = "matches.status.name" ,                 # CHANGE: #match.status.name            = "status.name", 
+  match.status.code             = "matches.status.code", 
+  status.id                     = "matches.status.id" ,                   # CHANGE:  match.status.id               = "status.id", 
+  match.status.period           = "matches.status.period", 
+  match.status.period.secs      = "matches.status.periodSecs",
+  match.status.period.display   = "matches.status.periodDisplay",
+  status.type.name              = "matches.status.typeName",              # CHANGE: match.status.type.name        = "status.typeName",
+  status.type.id                = "matches.status.typeId" ,                       # REMOVE: redundant
+  home.name                     = "matches.squads.home.name",             # CHANGE: home.squad.name               = "squads.home.name",
+  home.code                     = "matches.squads.home.code",             # CHANGE: home.squad.code               = "squads.home.code",
+  home.id                       = "matches.squads.home.id",               # CHANGE: home.squad.id                 = "squads.home.id", 
+  home.goals                    = "matches.squads.home.score.goals",      # CHANGE: home.squad.goals              = "squads.home.score.goals",
+  home.behinds                  = "matches.squads.home.score.behinds",    # CHANGE: home.squad.behinds            = "squads.home.score.behinds",
+  home.points                   = "matches.squads.home.score.points",     # CHANGE: home.squad.points             = "squads.home.score.points",
+  away.name                     = "matches.squads.away.name",             # CHANGE: away.squad.name               = "squads.away.name"
+  away.code                     = "matches.squads.away.code",             # CHANGE: away.squad.code               = "squads.away.code", 
+  away.id                       = "matches.squads.away.id",               # CHANGE: away.squad.id                 = "squads.away.id",
+  away.goals                    = "matches.squads.away.score.goals",      # CHANGE: away.squad.goals              = "squads.away.score.goals",
+  away.behinds                  = "matches.squads.away.score.behinds",    # CHANGE: away.squad.behinds            = "squads.away.score.behinds",
+  away.points                   = "matches.squads.away.score.points",     # CHANGE: away.squad.points             = "squads.away.score.points",
+  winning.squad.id.match        = "matches.winningSquadId"
+  # These fields are dumb and/or repetitive 
+    #"" = "competitionType", 
+    #"" = "startYear", 
+    #"" = "endYear", 
+    #"" = "firstMatchStart"
+    #"" = "status.typeId", 
+  # These fields I dont think need exposing in this function (better served in getMatch)
+    # "matches.status.remainingSecs" 
+    # "matches.status.remainingDisplay"
+    # "matches.status.remainingTime"
+)
+
+#' getMetricsWhitelist
+#'
+#' This vector contains all of the fields in the getMetrics() function
+#' @keywords internal
+getMetricsWhitelist <- c(
+  "id", "code", "codeShort", "name",
+  "namePlural", "nameShort", "nameDisplay", "description",
+  "levelId", "level", "formatId", "format",
+  "formatAvgId", "formatAvg", "transaction"
+)
+
+#' getMetricsExposedFields
+#'
+#' This vector contains all of the fields we're exposing in the getMetrics() function
+#' @keywords internal
+getMetricsExposedFields <- c(
+  match.id               = "match.id" , 
+  metric.level           = "level",
+  metric.level.id        = "levelId",
+  metric.code            = "code",
+  metric.name            = "name",
+  metric.id              = "id",
+  metric.name.short      = "nameShort",
+  metric.name.short.code = "codeShort",
+  metric.name.plural     = "namePlural",
+  metric.name.display    = "nameDisplay",
+  metric.description     = "description",
+  metric.format          = "format",
+  metric.format.id       = "formatId",
+  metric.format.avg      = "formatAvg",
+  metric.format.avg.id   = "formatAvgId",
+  metric.isTransactional = "transaction"
+)
+
+#' getSquadsWhitelist
+#'
+#' This vector contains all of the fields in the getSquads() function
+#' @keywords internal
+getSquadsWhitelist <- c(
+  "homeState.id"  ,
+  "homeState.name",
+  "homeState.code",
+  "seasonId"      ,
+  "code"          ,
+  "id"            ,
+  "name"
+)
+
+#' getSquadsExposedFields_squad
+#'
+#' This vector contains all of the fields we're exposing in the getSquads() function WHEN a squadId is passed in 
+#' @keywords internal
+getSquadsExposedFields_squad <- c(
+  season.id  = "seasonId"      ,
+  squad.name = "name"          ,
+  squad.code = "code"          ,
+  squad.id   = "id"            ,
+  state.name = "homeState.name",
+  state.code = "homeState.code",
+  state.id   = "homeState.id"  
+)  
+
+#' getSquadsExposedFields_all
+#'
+#' This vector contains all of the fields we're exposing in the getSquads() function WHEN a squadId IS NOT passed in 
+#' @keywords internal
+getSquadsExposedFields_all <- c(
+  season.id  = "seasonId"      ,
+  squad.name = "squads.name"   ,
+  squad.code = "squads.code"   ,
+  squad.id   = "squads.id"            
+)  
+
+
