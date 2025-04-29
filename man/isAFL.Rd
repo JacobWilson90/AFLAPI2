@@ -10,6 +10,6 @@ isAFL(leagueId)
 a dataframe (of class "data.frame") or text string (of class "character")
 }
 \description{
-This function is used inside of getSquadSummaryFile() & getPlayerSummaryFile() to run a check on if the matchId passed in is an AFL mens match
+This function is used inside of getSquadSummaryFile() & getPlayerSummaryFile() to run a check on if the matchId passed in is an AFL mens match (regular or pre-season)
 }
 \keyword{internal}
