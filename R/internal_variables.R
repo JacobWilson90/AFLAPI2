@@ -1,5 +1,5 @@
 ####################
-   # Variables #
+# Variables #
 ####################
 
 #'userAgentHeader 
@@ -21,7 +21,7 @@ getSeasonWhitelist <- c("phases.id", "phases.name", "phases.code", "competitionC
                         "rounds.nextScheduled.end", "rounds.nextScheduled.id", "rounds.nextScheduled.phaseId",
                         "rounds.nextScheduled.number", "rounds.nextScheduled.phaseNumber", "rounds.nextScheduled.start",
                         "startDate", "startYear"
-                        )
+)
 
 #' getSeasonExposedFields
 #'
@@ -42,7 +42,7 @@ getSeasonExposedFields <- c(id                          = "season.id",
                             rounds.nextScheduled.start  = "nextRoundStart",
                             rounds.lastCompleted.number = "lastRound",
                             rounds.lastCompleted.end    = "lastRoundEnd"
-                            )
+)
 
 #' getShotsWhitelist
 #'
@@ -55,7 +55,7 @@ getShotsWhitelist <- c("matchId", "shots.matchTrxId", "shots.period", "shots.per
                        "shots.player.displayName", "shots.player.fullname", "shots.player.id", "shots.result.name", "shots.result.code",
                        "shots.result.points", "shots.result.pointsExpected", "shots.result.accuracyExpected", "shots.score.homePoints",
                        "shots.score.awayPoints", "shots.squad.code", "shots.squad.id", "shots.squad.name"
-                       )
+)
 
 #' getShotsExposedFields
 #'
@@ -83,7 +83,7 @@ getShotsExposedFields <- c(match.id      = 'matchId',
                            result        = 'shots.result.code',
                            points.exp    = 'shots.result.pointsExpected',
                            points        = 'shots.result.points'
-                           )
+)
 
 #' getChainsWhitelist
 #'
@@ -104,7 +104,7 @@ getChainsWhitelist <- c("matchId", "chains.id", "chains.period", "chains.end.mat
                         "chains.start.launchPlayer.displayName", "chains.start.launchPlayer.fullname", "chains.start.launchPlayer.id",
                         "chains.metrics.chainMetres", "chains.metrics.chainMetresReply", "chains.metrics.chainMetresNet",
                         "chains.end.turnover.turnoverTrxId"
-                        )
+)
 
 #' getChainsExposedFields
 #'
@@ -185,7 +185,7 @@ getEntriesWhitelist <- c("matchId", "entries.id", "entries.period", "entries.per
                          "entries.details.kick.resultLocation.xStd", "entries.details.kick.resultLocation.yStd",
                          "entries.details.kick.resultLocationRotated.x", "entries.details.kick.resultLocationRotated.y",
                          "entries.details.kick.resultLocationRotated.xStd", "entries.details.kick.resultLocationRotated.yStd"
-                         )
+)
 
 #' getEntriesExposedFields
 #'
@@ -231,27 +231,27 @@ getEntriesExposedFields <- c(match.id                                 = "matchId
                              entry.kick.result.location.rotated.y     = "entries.details.kick.resultLocationRotated.y",
                              entry.kick.result.location.rotated.x.std = "entries.details.kick.resultLocationRotated.xStd", 
                              entry.kick.result.location.rotated.y.std = "entries.details.kick.resultLocationRotated.yStd"
-                             )
+)
 
 #' getMatchTransactionsWhitelist
 #'
 #' This vector contains all the possible columns that can be returned by hitting the endpoint within the getMatchTransactions function.
 #' @keywords internal
 getMatchTransactionsWhitelist <- c("matchId", "id", "code", "name",
-                                  "period","periodSecs", 
-                                  "homeScore", "awayScore",
-                                  "squad.name", "squad.code", "squad.id",
-                                  "person.fullname", "person.displayName", "person.id",
-                                  "pressure.squad.name", "pressure.squad.id", "pressure.squad.code", "pressure.name", "pressure.code",
-                                  "pressure.points", "pressure.fullname1", "pressure.displayname1", "pressure.personid1", "pressure.role1",
-                                  "pressure.fullname2", "pressure.displayname2", "pressure.personid2", "pressure.role2",
-                                  "zonePhysical","zoneLogical",
-                                  "location.x", "location.y", "location.xStd", "location.yStd", "locationRotated.x",
-                                  "locationRotated.y", "locationRotated.xStd", "locationRotated.yStd", "kicking.foot", "kicking.intent",
-                                  "kicking.distance", "kicking.direction", "details.inside50Direction", "details.inside50Intent",
-                                  "details.shotAngle", "details.shotDistance", "details.shotResult", "details.shotSource", "details.shotType",
-                                  "details.freeKickContext", "details.freeKickReason", "details.kickinDirection"
-                                  )
+                                   "period","periodSecs", 
+                                   "homeScore", "awayScore",
+                                   "squad.name", "squad.code", "squad.id",
+                                   "person.fullname", "person.displayName", "person.id",
+                                   "pressure.squad.name", "pressure.squad.id", "pressure.squad.code", "pressure.name", "pressure.code",
+                                   "pressure.points", "pressure.fullname1", "pressure.displayname1", "pressure.personid1", "pressure.role1",
+                                   "pressure.fullname2", "pressure.displayname2", "pressure.personid2", "pressure.role2",
+                                   "zonePhysical","zoneLogical",
+                                   "location.x", "location.y", "location.xStd", "location.yStd", "locationRotated.x",
+                                   "locationRotated.y", "locationRotated.xStd", "locationRotated.yStd", "kicking.foot", "kicking.intent",
+                                   "kicking.distance", "kicking.direction", "details.inside50Direction", "details.inside50Intent",
+                                   "details.shotAngle", "details.shotDistance", "details.shotResult", "details.shotSource", "details.shotType",
+                                   "details.freeKickContext", "details.freeKickReason", "details.kickinDirection"
+)
 
 #' getMatchTransactionsExposedFields
 #'
@@ -309,7 +309,7 @@ getMatchTransactionsExposedFields <- c(match.id            = "matchId",
                                        freekick.context    = "details.freeKickContext",
                                        freekick.reason     = "details.freeKickReason",
                                        kickin.direction    = "details.kickinDirection"
-                                       )
+)
 
 #' getMatchTransactionsPressureCols
 #'
@@ -342,7 +342,7 @@ getLadderExposedFields <- c(season.id         = 'seasonId',
                             average.for       = 'squads.scores.forAverage',
                             average.against   = 'squads.scores.againstAverage',
                             average.margin    = 'squads.scores.marginAverage'
-                            )
+)
 
 #' getPlayerStatsExposedFields
 #'
@@ -361,7 +361,7 @@ getPlayerStatsExposedFields <- c(match.id      = 'matchId',
                                  plural        = 'squads.players_statistics_namePlural', 
                                  value         = 'squads.players_statistics_value',
                                  display       = 'squads.players_statistics_valueDisplay'
-                                 )
+)
 #' getPlayerStatsMissingFields
 #'
 #' This vector contains all the fields that are not present when there is no data to unnest following the tidyr::unnest("squads.players_statistics"...) call in the code. This vector adds the fields listed as columns so the function can return a consistent output.
@@ -382,7 +382,7 @@ getSquadStatsExposedFields <- c(match.id      = 'matchId'    ,
                                 plural        = 'squads.statistics_namePlural', 
                                 value         = 'squads.statistics_value'     ,
                                 display       = 'squads.statistics_valueDisplay'
-                                )
+)
 
 #' getSquadStatsMissingFields
 #'
@@ -424,7 +424,7 @@ getRotationsExposedFields <- c(
   squad.id                  = "squad.id"   ,
   period                    = "period"     ,     # CHANGE: match.period              = "period"    ,
   secs                      = "periodSecs" ,     # CHANGE: match.period.secs         = "periodSecs",
-  id                        = "matchTrxId" ,     # CHANGE: trx.id                    = "matchTrxId" ,
+  trx.id                    = "matchTrxId" ,     
   off.name                  = "off.fullname"   , # CHANGE: off.player.fullname       = "off.fullname"   ,
   off.display               = "off.displayName", # CHANGE: off.display.name          = "off.displayName",
   off.id                    = "off.personId"   , # CHANGE: off.player.id             = "off.personId"   ,
@@ -469,7 +469,7 @@ getSquadStatsPOSTExposedFields <- c(match.id      = "matchId",
                                     value         = "squads_statistics_value", 
                                     display       = "squads_statistics_valueDisplay",
                                     id            = "id"
-                                    )
+)
 
 #' getSquadStatsPOST_info_ExposedFields
 #'
@@ -482,7 +482,7 @@ getSquadStatsPOST_info_ExposedFields <- c(info.metric.codes = "metricCodes",
                                           info.context      = "context",
                                           info.lastXSeconds = "lastXSeconds" , 
                                           id                = "id"
-                                          )
+)
 
 #' getSquadStatsPOST_info_Whitelist
 #'
@@ -508,7 +508,7 @@ getPlayerStatsPOSTExposedFields <- c(match.id      = "matchId",
                                      value         = "statistics_value", 
                                      display       = "statistics_valueDisplay",
                                      id            = "id"
-                                     )
+)
 
 #' getPlayerStatsPOST_info_ExposedFields
 #'
@@ -520,7 +520,7 @@ getPlayerStatsPOST_info_ExposedFields <- c(info.metric.codes = "metricCodes",
                                            info.zones        = "zones",
                                            info.lastXSeconds = "lastXSeconds" , 
                                            id                = "id"
-                                           )
+)
 
 #' getPlayerStatsPOST_info_Whitelist
 #'
@@ -2483,7 +2483,6 @@ getSquadPersonsExposedFields <- c(
 )
 
 
-
 #' getPeriodScoresWhitelist
 #'
 #' This vector contains all the possible columns in the info portion of the getPeriodScores() function.
@@ -2748,7 +2747,7 @@ getFixtureExposedFields <- c(
   match.id                      = "matches.id",
   type.name                     = "matches.type.name",                    # CHANGE: match.type.name               = "type.name", 
   match.type.code               = "matches.type.code", 
-  match.type.id                 = "matches.type.id", 
+  type.id                       = "matches.type.id",                      # CHANGE: match.type.id                 = "matches.type.id",
   match.order                   = "matches.roundOrder" ,                  # CHANGE: match.round.order             = "roundOrder",
   match.date                    = "matches.date.startDate",               # CHANGE: match.start.date              = "date.startDate", 
   match.time                    = "matches.date.startTime",               # CHANGE: match.start.time              = "date.startTime", 
@@ -2760,7 +2759,7 @@ getFixtureExposedFields <- c(
   match.status.period.secs      = "matches.status.periodSecs",
   match.status.period.display   = "matches.status.periodDisplay",
   status.type.name              = "matches.status.typeName",              # CHANGE: match.status.type.name        = "status.typeName",
-  status.type.id                = "matches.status.typeId" ,                       # REMOVE: redundant
+  status.type.id                = "matches.status.typeId" ,               # REMOVE: redundant
   home.name                     = "matches.squads.home.name",             # CHANGE: home.squad.name               = "squads.home.name",
   home.code                     = "matches.squads.home.code",             # CHANGE: home.squad.code               = "squads.home.code",
   home.id                       = "matches.squads.home.id",               # CHANGE: home.squad.id                 = "squads.home.id", 
@@ -2775,15 +2774,14 @@ getFixtureExposedFields <- c(
   away.points                   = "matches.squads.away.score.points",     # CHANGE: away.squad.points             = "squads.away.score.points",
   winning.squad.id.match        = "matches.winningSquadId"
   # These fields are dumb and/or repetitive 
-    #"" = "competitionType", 
-    #"" = "startYear", 
-    #"" = "endYear", 
-    #"" = "firstMatchStart"
-    #"" = "status.typeId", 
+  #"" = "competitionType", 
+  #"" = "startYear", 
+  #"" = "endYear", 
+  #"" = "firstMatchStart"
   # These fields I dont think need exposing in this function (better served in getMatch)
-    # "matches.status.remainingSecs" 
-    # "matches.status.remainingDisplay"
-    # "matches.status.remainingTime"
+  # "matches.status.remainingSecs" 
+  # "matches.status.remainingDisplay"
+  # "matches.status.remainingTime"
 )
 
 #' getMetricsWhitelist
@@ -2803,18 +2801,18 @@ getMetricsWhitelist <- c(
 #' @keywords internal
 getMetricsExposedFields <- c(
   match.id               = "match.id" , 
-  metric.level           = "level",
-  metric.level.id        = "levelId",
-  metric.code            = "code",
-  metric.name            = "name",
-  metric.id              = "id",
-  metric.name.short      = "nameShort",
+  level.name             = "level" ,         # CHANGE: metric.level           = "level"    ,
+  level.id               = "levelId",        # CHANGE: metric.level.id        = "levelId"  ,
+  code                   = "code" ,          # CHANGE: metric.code            = "code"     ,
+  name                   = "name" ,          # CHANGE: metric.name            = "name"     ,
+  id                     = "id" ,            # CHANGE: metric.id              = "id"       ,
+  short                  = "nameShort",      # CHANGE: metric.name.short      = "nameShort",
   metric.name.short.code = "codeShort",
-  metric.name.plural     = "namePlural",
+  plural                 = "namePlural",     # CHANGE: metric.name.plural     = "namePlural",
   metric.name.display    = "nameDisplay",
-  metric.description     = "description",
-  metric.format          = "format",
-  metric.format.id       = "formatId",
+  description            = "description",    # CHANGE: metric.description     = "description",
+  format.name            = "format",         # CHANGE: metric.format          = "format",
+  format.id              = "formatId",       # CHANGE: metric.format.id       = "formatId",
   metric.format.avg      = "formatAvg",
   metric.format.avg.id   = "formatAvgId",
   metric.isTransactional = "transaction"
@@ -2854,9 +2852,7 @@ getSquadsExposedFields_squad <- c(
 #' @keywords internal
 getSquadsExposedFields_all <- c(
   season.id  = "seasonId"      ,
-  squad.name = "squads.name"   ,
-  squad.code = "squads.code"   ,
-  squad.id   = "squads.id"            
+  name = "squads.name" ,              # CHANGE: squad.name = "squads.name"   ,
+  code = "squads.code" ,              # CHANGE: squad.code = "squads.code"   ,
+  id   = "squads.id"                  # CHANGE: squad.id   = "squads.id"            
 )  
-
-

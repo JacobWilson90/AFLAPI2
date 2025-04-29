@@ -372,7 +372,7 @@ getVenue <- function(matchId,...){
 #'@examples
 #'getMatchPeriods(216085122)
 #'@export
-getMatchPeriods <- function(matchId, silenceWarning=FALSE, ...){
+getMatchPeriods <- function(matchId, silenceWarning = FALSE, ...){
   
   if(silenceWarning == F) message(paste0("\nWarning Message:\n--> This function has been superseded (will recieve no further development) as of cdAFLAPI v1.5.0\n--> It will be deprecated from all package releases post the end of the 2025 mens AFL season.\n--> Please use getMatch(periods = TRUE) instead.\n\nTo silence this message, pass silenceWarning = TRUE to this function.")); 
   

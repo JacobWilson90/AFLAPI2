@@ -197,9 +197,6 @@ getRotations <- function(matchId, currentStints = FALSE, ...){
       returnData          <- returnData[, getRotationsExposedFields]
       names(returnData)   <- names(getRotationsExposedFields)
       
-      # Order by trx.id
-      returnData          <- returnData[order(returnData$id), ]
-      
     } # CLOSE // if-else (currentStints == TRUE)
   } # CLOSE // if-else (is.null(rawResponse))
   return(returnData)
@@ -1550,6 +1547,10 @@ getSquadSummaryFile <- function(matchId,...) {
   returnData$SQUAD_NAME <- factor(returnData$SQUAD_NAME, levels = c(matchDetails$home.name[1], matchDetails$away.name[1]))
   returnData            <- returnData[order(returnData$SQUAD_NAME, returnData$PERIOD, returnData$ZONE_LOGICAL_AFL ), ]
   
+  # Convert factors to char (this occurs after manipulation above with zone logical and squad name)
+  returnData$SQUAD_NAME       <- as.character(returnData$SQUAD_NAME)
+  returnData$ZONE_LOGICAL_AFL <- as.character(returnData$ZONE_LOGICAL_AFL)
+  
   # Output
   return(returnData)
   
@@ -1738,6 +1739,10 @@ getPlayerSummaryFile <- function(matchId,...) {
   
   # Apply column filtering/ordering (will naturally remove '_ALL_ZONE' cols from above)
   returnData        <- returnData[, getPlayerSummaryFileExposedFields]
+  
+  # Convert factors to char (this occurs after manipulation above with zone logical and squad name)
+  returnData$SQUAD_NAME       <- as.character(returnData$SQUAD_NAME)
+  returnData$ZONE_LOGICAL_AFL <- as.character(returnData$ZONE_LOGICAL_AFL)
   
   # Output
   return(returnData)

@@ -420,7 +420,7 @@ getSquadLists <- function(seasonId,leagueId=1,levelId=1,...){
   if(missing(seasonId)) seasonId <- getCurrentSeason(leagueId,levelId,...)
   
   # Hit squads endpoint for list of all squadId's
-  squads <- getSquads(seasonId,leagueId,levelId,...) %>% select(squad.id) %>% pull()
+  squads <- getSquads(seasonId,leagueId,levelId,...) %>% select(id) %>% pull()
   
   # Empty object to bind to
   return <- NULL
