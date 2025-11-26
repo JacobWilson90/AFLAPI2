@@ -1,78 +1,11 @@
-#'Season Details
-#'
-#'Get details about a given season.
-#'@param seasonId A numerical identifier of a season. If missing, defaults to the current season of the League Level defined by 'leagueId' and 'levelId'.
-#'@param leagueId A unique numerical identifier of a league. Defaults to AFL Men's Premiership.
-#'@param levelId A unique numerical identifier of a level. Defaults to Seniors.
-#'@param ... Arguments to be passed to internal functions, such as \code{envir} or \code{version}.
-#'@return A data frame with details about the given season.
-#'\itemize{
-#'    \item \code{season.id} A numerical identifier of a season.
-#'    \item \code{competition.id} A unique numerical identifier of a competition, combining League, Level and Season.
-#'    \item \code{competition.code} A short code describing the competition.
-#'    \item \code{competition.name} The full name of the competition.
-#'    \item \code{startDate} The date of the first match of the season 'YYYY-MM-DD'.
-#'    \item \code{startYear} The year of the first match of the season.
-#'    \item \code{endDate} The date of the final scheduled game of the season 'YYYY-MM-DD'.
-#'    \item \code{endYear} The year of the final scheduled game of the season.
-#'    \item \code{complete} A count of the complete matches in the season.
-#'    \item \code{incomplete} A count of incomplete matches remaining in the season.
-#'    \item \code{nextRound} The round number of the next round to start.
-#'    \item \code{nextRoundStart} The datetime of the first match of the next round to start, in UTC time.
-#'    \item \code{lastRound} The round number of the last round to finish.
-#'    \item \code{lastRoundEnd} The datetime of the end of the last match of the last round to finish, in UTC time.
-#'    \item \code{firstMatchStart} The datetime of the first match of the season.
-#'}
-#'@examples
-#'getSeason(2022)
-#'getSeason()
-#'@export
-getSeason <- function(seasonId,leagueId=1,levelId=1,...){
-  
-  # Handle season not being provided
-  if(missing(seasonId)) seasonId <- getCurrentSeason(leagueId,levelId,...)
-  
-  # Hit API for response
-  rawResponse <- cdAPIresponse(endpoint = paste('leagues',leagueId,'levels',levelId,'seasons',seasonId,sep='/'))
-  
-  # If response from cdAPIresponse is NULKL object, return
-  if(is.null(rawResponse)){
-    return(NULL)  
-  } else {
-    
-    # Convert response to flat list
-    listResponse <- rawResponse %>% resp_body_json(simplifyVector = TRUE)
-    
-    # Convert list into DF
-    returnData <- listResponse %>% as.data.frame() %>% jsonlite::flatten()
-    
-    # Get vector of the missing fields (IF ANY) in the call info
-    missing <- setdiff(getSeasonWhitelist,names(returnData))
-    
-    # Add on any of the missing columns in the response 
-    returnData[missing] <- lapply(missing, function(x) rep(NA, nrow(returnData)))
-    
-    # Remove Phases Info (H&A / Finals) - Do we want to do this?
-    returnData <- returnData[, !(names(returnData) %in% c("phases.id", "phases.name", "phases.code"))]
-    
-    # Return a single row
-    returnData <- unique(returnData)
-    
-    # Select exposed fields & rename columns
-    returnData        <- returnData[, names(getSeasonExposedFields)]
-    names(returnData) <- getSeasonExposedFields[names(returnData)]
-    
-    return(returnData)
-    
-  }
-}
-
 #'Fixture
 #'
 #'Get the fixture for a given season.
 #'@param seasonId A numerical identifier of a season. If missing, defaults to the current season of the League Level defined by 'leagueId' and 'levelId'.
 #'@param leagueId A unique numerical identifier of a league. Defaults to AFL Men's Premiership.
 #'@param levelId A unique numerical identifier of a level. Defaults to Seniors.
+#'@param roundNumber An (optional) parameter to specify a round number for the given season/league/level's fixture. Defaults to most recent round if not supplied.
+#'@param squadId An (optional) parameter to specify a specific squad ID to pull in the fixture for a single squad that plays within the given season/league/level's fixture.
 #'@param ... Arguments to be passed to internal functions, such as \code{envir} or \code{version}.
 #'@return A data frame with the fixture for a given season, with one row per match.
 #' \itemize{
@@ -127,14 +60,13 @@ getSeason <- function(seasonId,leagueId=1,levelId=1,...){
 #'getFixture(2022)
 #'getFixture()
 #'@export
-getFixture <- function(seasonId, squadId, leagueId=1, levelId=1,...){
+getFixture <- function(seasonId, squadId = NULL, roundNumber = NULL, leagueId=1, levelId=1,...){
   
-  # Handle input params incl. squadId
+  # Default val if no seasonId supplied
   seasonId <- if(missing(seasonId)) getCurrentSeason(...) else seasonId
-  squadId  <- if(missing(squadId)) NULL else paste("?squadId=", squadId, sep='')             
   
   # Hit API
-  rawResponse <- cdAPIresponse(endpoint = paste0(paste('leagues',leagueId,'levels',levelId,'seasons',seasonId,'fixture',sep='/'),squadId), ...)
+  rawResponse <- cdAPIresponse(endpoint = paste0(paste('leagues',leagueId,'levels',levelId,'seasons',seasonId,'fixture?',sep='/'),optionalParams("squadId"=squadId,"roundNumber"=roundNumber)) , ...)
   
   if(is.null(rawResponse)){
     return(rawResponse)
@@ -201,35 +133,29 @@ getFixture <- function(seasonId, squadId, leagueId=1, levelId=1,...){
 #'getLadder(2022,4)
 #'getLadder()
 #'@export
-getLadder <- function(seasonId,roundNumber,leagueId=1,levelId=1,...){
+getLadder <- function(seasonId, roundNumber = NULL, conference = NULL, leagueId=1,levelId=1,...){
+  
   # Handling the default for not passing in a seasonId
   if(missing(seasonId)) seasonId <- getCurrentSeason(leagueId,levelId,...)
   
-  if(is.null(seasonId)){
-    return(NULL)
+  # Hit endpoint
+  rawResponse  <- cdAPIresponse(endpoint = paste0(paste('leagues',leagueId,'levels',levelId,'seasons',seasonId,'ladder',"?",sep = "/"), optionalParams("roundNumber" = roundNumber, "conference" = conference)),...)
+  
+  if(is.null(rawResponse)){
+    return(rawResponse)
   } else {
-    # Handling the default for not passing in a roundNo
-    if(missing(roundNumber)) roundNumber <- NULL else roundNumber 
     
-    # Hit endpoint
-    rawResponse  <- cdAPIresponse(endpoint = paste('leagues',leagueId,'levels',levelId,'seasons',seasonId,'ladder',roundNumber,sep = "/"), ...)
+    # Convert response to flat list
+    listResponse <- rawResponse %>% resp_body_json(simplifyVector = TRUE)
     
-    if(is.null(rawResponse)){
-      return(rawResponse)
-    } else {
-      
-      # Convert response to flat list
-      listResponse <- rawResponse %>% resp_body_json(simplifyVector = TRUE)
-      
-      # Convert list into DF
-      returnData <- listResponse %>% as.data.frame() %>% jsonlite::flatten()
-      
-      # Select exposed fields (getLadderExposedFields) & rename columns
-      returnData        <- returnData[, getLadderExposedFields]
-      names(returnData) <- names(getLadderExposedFields)
-      
-      return(returnData)
-    }
+    # Convert list into DF
+    returnData <- listResponse %>% as.data.frame() %>% jsonlite::flatten()
+    
+    # Select exposed fields (getLadderExposedFields) & rename columns
+    returnData        <- returnData[, getLadderExposedFields]
+    names(returnData) <- names(getLadderExposedFields)
+    
+    return(returnData)
   }
 }
 
@@ -260,9 +186,8 @@ getSquads <- function(seasonId,leagueId=1,levelId=1,squadId,...){
   squadId  <- if(missing(squadId)) NULL else squadId            
   
   # Hit API
-  # rawResponse <- cdAPIresponse(endpoint = paste('leagues',leagueId,'levels',levelId,'seasons',seasonId,'squads',squadId,sep='/'), ...)
-  rawResponse <- cdAPIresponse(endpoint = paste('leagues',leagueId,'levels',levelId,'seasons',seasonId,'squads',squadId,sep='/'))
-  
+  rawResponse <- cdAPIresponse(endpoint = paste('leagues',leagueId,'levels',levelId,'seasons',seasonId,'squads',squadId,sep='/'), ...)
+
   if(is.null(rawResponse)){
     return(rawResponse)
   } else {
@@ -282,41 +207,6 @@ getSquads <- function(seasonId,leagueId=1,levelId=1,squadId,...){
     
     return(returnData)
   }
-}
-
-#'Squad Details
-#'
-#'Get details about a squad in a season.
-#'@param squadId A unique numerical identifier of a squad.
-#'@param seasonId A numerical identifier of a season. If missing, defaults to the current season of the League Level defined by 'leagueId' and 'levelId'.
-#'@param leagueId A unique numerical identifier of a league. Defaults to AFL Men's Premiership.
-#'@param levelId A unique numerical identifier of a level. Defaults to Seniors.
-#'@param ... Arguments to be passed to internal functions, such as \code{envir} or \code{version}.
-#'@return A data frame with details about a squads.
-#'\itemize{
-#'    \item \code{season.id} A numerical identifier of a season.
-#'    \item \code{id} A unique numerical identifier of the squad.
-#'    \item \code{name} The name of the squad.
-#'    \item \code{code} A short code to represent the squad.
-#'    \item \code{state.id} A numerical identifier of a country's state.
-#'    \item \code{state.name} The squad's home state.
-#'    \item \code{state.code} A short code representing the squad's home state.
-#'}
-#'@examples
-#'getSquad(10,2022)
-#'getSquad(20)
-#'@export
-getSquad <- function(squadId,seasonId,leagueId=1,levelId=1,silenceWarning = FALSE,...){
-  
-  if(silenceWarning == F) message(paste0("\nWarning Message:\n--> This function has been superseded (will recieve no further development) as of cdAFLAPI v1.5.0\n--> It will be deprecated from all package releases post the end of the 2025 mens AFL season.\n--> Please pass a squadId to getSquads(squadId = [squadId] ) instead.\n\nTo silence this message, pass silenceWarning = TRUE to this function.")); 
-  
-  if(missing(seasonId)) seasonId <- getCurrentSeason(leagueId,levelId,...)
-  cdAPI(paste('leagues',leagueId,'levels',levelId,'seasons',seasonId,'squads',squadId,sep='/'),...) %>%
-    select(season.id='seasonId',
-           id,name,code,
-           state.id='homeState.id',
-           state.name='homeState.name',
-           state.code='homeState.code')
 }
 
 #'Squad Person List
@@ -365,7 +255,7 @@ getSquadPersons <- function(squad,seasonId,leagueId=1,levelId=1,...){
   if(is.numeric(squad)){
     squadId <- squad
   }else{
-    squadId <- getSquads(seasonId,leagueId,levelId,...) %>% subset(squad.name==squad) %>% select(squad.id) %>% pull()
+    squadId <- getSquads(seasonId,leagueId,levelId,...) %>% subset(name==squad) %>% dplyr::select(id) %>% pull()
   }
   
   rawResponse  <- cdAPIresponse(endpoint = paste('leagues',leagueId,'levels',levelId,'seasons',seasonId,'squads',squadId,'persons',sep='/') )
@@ -420,7 +310,7 @@ getSquadLists <- function(seasonId,leagueId=1,levelId=1,...){
   if(missing(seasonId)) seasonId <- getCurrentSeason(leagueId,levelId,...)
   
   # Hit squads endpoint for list of all squadId's
-  squads <- getSquads(seasonId,leagueId,levelId,...) %>% select(id) %>% pull()
+  squads <- getSquads(seasonId,leagueId,levelId,...) %>% dplyr::select(id) %>% pull()
   
   # Empty object to bind to
   return <- NULL
@@ -431,6 +321,76 @@ getSquadLists <- function(seasonId,leagueId=1,levelId=1,...){
   # output
   return(return %>% arrange(squad.name,name))
   
+}
+
+#'Seasons Info
+#'
+#'Get information about all available seasons for a given league/level.
+#'@param seasonId A numerical identifier of a season. If missing, defaults to the current season of the League Level defined by 'leagueId' and 'levelId'.
+#'@param leagueId A unique numerical identifier of a league. Defaults to AFL Men's Premiership.
+#'@param levelId A unique numerical identifier of a level. Defaults to Seniors (1).
+#'@param ... Arguments to be passed to internal functions, such as \code{envir} or \code{version}.
+#'@return A data frame with a list of metrics for a match for each player.
+#' \itemize{
+#'   \item \code{competition.name} The name of the competition.
+#'   \item \code{competition.code} A short code describing the competition.
+#'   \item \code{competition.id} A unique numerical identifier of the competition.
+#'   \item \code{season.id} A numerical identifier of a season.
+#'   \item \code{season.start.date} The start date of the season.
+#'   \item \code{season.end.date} The end date of the season.
+#'   \item \code{league.id} A unique numerical identifier of the league.
+#'   \item \code{league.name} The name of the league.
+#'   \item \code{league.code} A short code representing the name of the league. 
+#'   \item \code{league.gender} A short code representing The gender of a league. "M" for Men's, "W" for Women's.
+#'   \item \code{matches.complete} The number of matches in the season that have been completed.
+#'   \item \code{matches.incomplete} The number of matches as-yet incomplete for the season.
+#'   \item \code{first.match.start} The date-time of the first match of the season.
+#'   \item \code{last.completed.round.number} The round number of the last completed round of the next scheduled round of the season.
+#'   \item \code{last.completed.round.start} The start date-time of the last completed round of the season.
+#'   \item \code{last.completed.round.end} The end date-time of the last completed round of the season.
+#'   \item \code{next.scheduled.round.number} The round number of the next scheduled round of the season.
+#'   \item \code{next.scheduled.round.start} The start date-time of the next scheduled round of the season.
+#'   \item \code{next.scheduled.round.end} The end date-time of the next scheduled round of the season.
+#' }
+#'@examples
+#'getSeasons()
+#'getSeasons(leagueId = 12)
+#'@export
+getSeasons <- function(leagueId = 1, levelId = 1, seasonId, ...){
+  
+  # Hit API for response
+  rawResponse <- cdAPIresponse(endpoint = paste('leagues',leagueId,'levels',levelId,"seasons",sep='/'), ...)
+  
+  if(is.null(rawResponse)){
+    return(rawResponse)
+  } else {
+    
+    # Convert response to flat list
+    listResponse <- rawResponse %>% resp_body_json(simplifyVector = TRUE)
+    
+    # Convert list into DF
+    returnData <- listResponse %>% as.data.frame() %>% jsonlite::flatten()
+    
+    # If season_id is supplied, filter for just the supplied season
+    # NOTE: done like this because at time of writing different fields are returned from API between:
+      # -> /leagues/{league_id}/levels/{level_id}/seasons/{season_id} and
+      # -> /leagues/{league_id}/levels/{level_id}/seasons/
+    if(!missing(seasonId)){
+      returnData <- returnData[returnData$seasons.id == seasonId,]
+    }
+    
+    # Get vector of the missing fields (IF ANY) in the call info
+    missing <- setdiff(getSeasonsExposedFields, names(returnData))
+    
+    # Add on any of the missing columns in the response 
+    returnData[missing] <- lapply(missing, function(x) rep(NA, nrow(returnData)))
+    
+    # Select exposed fields & rename columns
+    returnData        <- returnData[, getSeasonsExposedFields]
+    names(returnData) <- names(getSeasonsExposedFields)
+    
+    return(returnData)
+  }
 }
 
 

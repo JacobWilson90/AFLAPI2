@@ -193,58 +193,13 @@ getRotations <- function(matchId, currentStints = FALSE, ...){
       # Add on any of the missing columns in the response 
       returnData[missing] <- lapply(missing, function(x) rep(NA, nrow(returnData)))
       
-      # Select exposed fields (getShotsExposedFields) & rename columns
+      # Select exposed fields (getRotationsExposedFields) & rename columns
       returnData          <- returnData[, getRotationsExposedFields]
       names(returnData)   <- names(getRotationsExposedFields)
       
     } # CLOSE // if-else (currentStints == TRUE)
   } # CLOSE // if-else (is.null(rawResponse))
   return(returnData)
-}
-
-#' Match Bench
-#' 
-#' Get the current bench status of all players in a match.
-#'@param matchId A unique numerical identifier of a match.
-#'@param ... Arguments to be passed to internal functions, such as \code{envir} or \code{version}.
-#'@return A data frame with a list of all players for the match and their current bench status.
-#'\itemize{
-#'    \item \code{match.id} A unique numerical identifier of a match.
-#'    \item \code{squad.id} A unique numerical identifier of the squad.
-#'    \item \code{squad.name} The name of the squad.
-#'    \item \code{squad.code} A short code to represent the squad.
-#'    \item \code{id} A unique numerical identifier of the player.
-#'    \item \code{name} The full name of the player.
-#'    \item \code{display} The display name of the player, represented as first initial and surname.
-#'    \item \code{status} The player's current status.
-#'    \item \code{elapsed} Seconds elapsed within the current period since the player's last interchange move.
-#'}
-#'@examples
-#'getBench(216085122)
-#'@export
-getBench <- function(matchId, silenceWarning = FALSE, ...){
-  
-  if(silenceWarning == F) message(paste0("\nWarning Message:\n--> This function has been superseded (will recieve no further development) as of cdAFLAPI v1.5.0\n--> It will be deprecated from all package releases post the end of the 2025 mens AFL season.\n--> Please use getRotations(currentStints = TRUE) instead.\n\nTo silence this message, pass silenceWarning = TRUE to this function.")); 
-  
-  r <- cdAPI(paste('matches',matchId,'rotations',sep='/'),df=FALSE,...) %>%
-    content()
-  if(length(r$home$players)==0) return(NULL)
-  home <- data.frame(with(r$home,data.frame(squadCode,squadId,squadName,stringsAsFactors = FALSE)),data.frame(do.call(bind_rows,lapply(r$home$players,unlist))))
-  away <- data.frame(with(r$away,data.frame(squadCode,squadId,squadName,stringsAsFactors = FALSE)),data.frame(do.call(bind_rows,lapply(r$away$players,unlist))))
-  temp <- bind_rows(home,away)
-  if(!'currentStint.status'%in%names(temp)) temp <- temp %>% mutate(currentStint.status=NA)
-  if(!'currentStint.elapsedSecs'%in%names(temp)) temp <- temp %>% mutate(currentStint.status=NA)
-  temp %>%
-    mutate(match.id=matchId) %>%
-    select(match.id,
-           squad.id='squadId',
-           squad.name='squadName',
-           squad.code='squadCode',
-           id='personId',
-           name='fullname',
-           display='displayName',
-           status='currentStint.status',
-           elapsed='currentStint.elapsedSecs')
 }
 
 #'Match Shots
@@ -293,8 +248,8 @@ getShots <- function(matchId,...){
     
     # Handle if successful response but no events happened yet (second element of list empty)
     if(is_empty(listResponse[[2]])) {
-      returnData        <- data.frame(matrix(ncol = length(getShotsWhitelist), nrow = 0))
-      names(returnData) <- getShotsWhitelist
+      returnData        <- data.frame(matrix(ncol = length(getShotsExposedFields), nrow = 0))
+      names(returnData) <- getShotsExposedFields
       message(paste0("\nWarning:\n--> 0 rows of data in response.")) 
       return(returnData)
     } else {
@@ -302,7 +257,7 @@ getShots <- function(matchId,...){
       returnData <- listResponse %>% as.data.frame() %>% jsonlite::flatten()
       
       # Get vector of the missing fields (IF ANY) in the call info
-      missing <- setdiff(getShotsWhitelist,names(returnData))
+      missing <- setdiff(getShotsExposedFields,names(returnData))
       
       # Add on any of the missing columns in the response 
       returnData[missing] <- lapply(missing, function(x) rep(NA, nrow(returnData)))
@@ -321,7 +276,7 @@ getShots <- function(matchId,...){
 #'Get squad stats for a match. Only returns observed metrics.
 #'@param matchId A unique numerical identifier of a match.
 #'@param period A numerical indicator of a period to filter results within a match. Accepts integer values.
-#'@param zone A text indicator of a zone on the field to filter results within a match. Accepts string values "D50","DM","AM","F50".
+#'@param zone A text indicator of a zone on the field to filter results within a match. Accepts string values: \code{"D50","DM","AM","F50","CB"}.
 #'@param context A text indicator of the context for squad statistics. Accepts "For" "Against" or "Diff".
 #'@param metric A text string of specific metric code(s) to be returned. This will result in the endpoint only returning these specific metrics. Note this endpoint is case sensitive and only works with metric codes (ie. \code{c("TACKLE", "GOAL")}
 #'@param team A (case-sensitive) text string of the team to return metrics for. Either \code{"home"} or \code{"away"}. Not passing anything to this param will return both teams.
@@ -346,29 +301,27 @@ getShots <- function(matchId,...){
 #'getSquadStats(216085122)
 #'getSquadStats(216085122,period=1,zone='D50',from = 0, to = 300)
 #'@export
-getSquadStats <- function(matchId, period, zone, context, metric, team, lastXseconds, from, to, ...) {
+getSquadStats <- function(matchId, period = NULL, zone = NULL, context = NULL, metric = NULL, team = NULL, lastXseconds = NULL, from = NULL, to = NULL, ...) {
   
   if(!missing(lastXseconds) && (!missing(from) || !missing(to))) {
     message(paste0("\nError:\n--> 'lastXseconds' parameter cannot be passed in to getSquadStats() alongside the 'from' or 'to' parameter(s)."))
     return(NULL)
   }
   
-  # Build URL based on user inputs
-  baseString   <- paste('matches', matchId, 'statistics/squads?', sep='/')                                               # Base URL
-  periodString <- if (missing(period))       NULL else paste(paste("period=", period, sep=''), collapse="&")             # Periods
-  zoneString   <- if (missing(zone))         NULL else paste(paste("zone=", zone, sep=''), collapse="&")                 # Zones
-  contextString<- if (missing(context))      NULL else paste(paste("context=", context, sep=''), collapse="&")           # Context
-  metricString <- if (missing(metric))       NULL else paste(paste("metric=", metric, sep=''), collapse="&")             # Metrics
-  teamString   <- if (missing(team))         NULL else paste("team=", tolower(team), sep='')                             # Team
-  lastXstring  <- if (missing(lastXseconds)) NULL else paste(paste("lastXSeconds=", lastXseconds, sep=''), collapse="&") # lastXseconds 
-  fromString   <- if (missing(from))         NULL else paste(paste("fromPeriodSeconds=", from, sep=''), collapse="&")    # from 
-  toString     <- if (missing(to))           NULL else paste(paste("toPeriodSeconds=", to, sep=''), collapse="&")        # to 
+  # Base URL
+  baseString   <- paste('matches',matchId,'statistics/squads?',sep='/') 
   
-  # Filter out NULL (non-supplied) inputs
-  paramsList <- Filter(Negate(is.null), list(periodString, zoneString, contextString, metricString, teamString, lastXstring, fromString, toString))
-  
-  # HIT API with valid & combined URL string
-  rawResponse <- cdAPIresponse(endpoint = paste0(baseString, paste(paramsList, collapse="&")), ...)
+  # Hit API
+  rawResponse <- cdAPIresponse(endpoint = paste0(baseString, optionalParams(
+    "period"       = period , 
+    "zone"         = zone , 
+    "context"      = context , 
+    "metric"       = metric , 
+    "team"         = team , 
+    "lastXseconds" = lastXseconds , 
+    "from"         = from , 
+    "to"           = to 
+  )), ...)
   
   if(is.null(rawResponse)) {
     return(rawResponse)
@@ -403,7 +356,7 @@ getSquadStats <- function(matchId, period, zone, context, metric, team, lastXsec
 #'Get player stats for a match. Only returns observed metrics.
 #'@param matchId A unique numerical identifier of a match.
 #'@param period A numerical indicator of a period to filter results within a match. Accepts integer values.
-#'@param zone A text indicator of a zone on the field to filter results within a match. Accepts string values "D50","DM","AM","F50".
+#'@param zone A text indicator of a zone on the field to filter results within a match. Accepts string values: \code{"D50","DM","AM","F50","CB"}.
 #'@param metric A text string of specific metric code(s) to be returned. This will result in the endpoint only returning these specific metrics. Note this endpoint is case sensitive and only works with metric codes (ie. \code{c("TACKLE", "GOAL")}
 #'@param team A (case-sensitive) text string of the team to return metrics for. Either \code{"home"} or \code{"away"}. Not passing anything to this param will return both teams.
 #'@param lastXseconds An integer that limits statistics to counting events that occurred in the last X number of seconds. (ie. \code{lastXSeconds = 300} will return the last 5 minutes)
@@ -412,7 +365,6 @@ getSquadStats <- function(matchId, period, zone, context, metric, team, lastXsec
 #'@param ... Arguments to be passed to internal functions, such as \code{envir} or \code{version}.
 #'@return A data frame with a list of metrics for a match for each player.
 #'\itemize{
-#'    \item \code{match.id} A unique numerical identifier of a match.
 #'    \item \code{squad.id} A unique numerical identifier of the squad.
 #'    \item \code{squad.name} The name of the squad.
 #'    \item \code{squad.code} A short code to represent the squad.
@@ -430,28 +382,26 @@ getSquadStats <- function(matchId, period, zone, context, metric, team, lastXsec
 #'getPlayerStats(216085122)
 #'getPlayerStats(216085122,period=1,zone='D50',from = 0,to = 300)
 #'@export
-getPlayerStats <- function(matchId, period, zone, metric, team, lastXseconds, from, to, ...) {
+getPlayerStats <- function(matchId, period = NULL, zone = NULL, metric = NULL, team = NULL, lastXseconds = NULL, from = NULL, to = NULL, ...) {
   
   if(!missing(lastXseconds) && (!missing(from) || !missing(to))) {
     message(paste0("\nError:\n--> 'lastXseconds' parameter cannot be passed in to getPlayerStats() alongside the 'from' or 'to' parameter(s)."))
     return(NULL)
   }
   
-  # Build URL based on user inputs
-  baseString   <- paste('matches', matchId, 'statistics/players?', sep='/')                                              # Base URL
-  metricString <- if (missing(metric))       NULL else paste(paste("metric=", metric, sep=''), collapse="&")             # Metrics
-  periodString <- if (missing(period))       NULL else paste(paste("period=", period, sep=''), collapse="&")             # Periods
-  zoneString   <- if (missing(zone))         NULL else paste(paste("zone=", zone, sep=''), collapse="&")                 # Zones
-  teamString   <- if (missing(team))         NULL else paste("team=", tolower(team), sep='')                             # Team
-  lastXstring  <- if (missing(lastXseconds)) NULL else paste(paste("lastXSeconds=", lastXseconds, sep=''), collapse="&") # lastXseconds 
-  fromString   <- if (missing(from))         NULL else paste(paste("fromPeriodSeconds=", from, sep=''), collapse="&")    # from 
-  toString     <- if (missing(to))           NULL else paste(paste("toPeriodSeconds=", to, sep=''), collapse="&")        # to 
+  # Base URL
+  baseString   <- paste('matches',matchId,'statistics/players?',sep='/')                                                 
   
-  # Filter out NULL (non-supplied) inputs
-  paramsList <- Filter(Negate(is.null), list(periodString, zoneString, metricString, teamString, lastXstring, fromString, toString))
-  
-  # HIT API with valid & combined URL string
-  rawResponse <- cdAPIresponse(endpoint = paste0(baseString, paste(paramsList, collapse="&")), ...)
+  # Hit API
+  rawResponse <- cdAPIresponse(endpoint = paste0(baseString, optionalParams(
+    "period"       = period , 
+    "zone"         = zone , 
+    "metric"       = metric , 
+    "team"         = team , 
+    "lastXseconds" = lastXseconds , 
+    "from"         = from , 
+    "to"           = to 
+  )), ...)
   
   if(is.null(rawResponse)) {
     return(rawResponse)
@@ -541,7 +491,7 @@ getLeaders <- function(matchId,...){
     # Add on any of the missing columns in the response 
     returnData[missing] <- lapply(missing, function(x) rep(NA, nrow(returnData)))
     
-    # Select exposed fields (getShotsExposedFields) & rename columns
+    # Select exposed fields (getLeadersExposedFields) & rename columns
     returnData        <- returnData[, getLeadersExposedFields]
     names(returnData) <- names(getLeadersExposedFields)
     
@@ -690,6 +640,8 @@ getPeriodScores <- function(matchId,cumulative=FALSE,...){
 #'    \item \code{freekick.context} On free kick transactions, the broad context from which the free kick was awarded.
 #'    \item \code{freekick.reason} On free kick transactions, the specific reason the free kick was awarded.
 #'    \item \code{kickin.direction} On kick in transactions, a text description of the direction taken from the kick in.
+#'    \item \code{time.capture.UTC} The date and time of the event in UTC.
+#'    \item \code{time.capture.flag} Boolean indicating if the timestamp was captured using time capture or calculated using period start utc and elapsed seconds.
 #'}
 #'@examples
 #'getMatchTransactions(216085122)
@@ -697,7 +649,7 @@ getPeriodScores <- function(matchId,cumulative=FALSE,...){
 getMatchTransactions <- function(matchId,...){
   
   # Hit API for response
-  rawResponse <- cdAPIresponse(endpoint = paste('matches',matchId,"transactions",sep = '/'), ...) 
+  rawResponse <- cdAPIresponse(endpoint = paste("matches", matchId,"transactions",sep = '/'), ...) 
   
   if(is.null(rawResponse)){
     return(rawResponse)
@@ -708,8 +660,8 @@ getMatchTransactions <- function(matchId,...){
     
     # Handle if successful response but no events happened yet (second element of list empty)
     if(is_empty(listResponse[[1]])) {
-      returnData        <- data.frame(matrix(ncol = length(getMatchTransactionsWhitelist), nrow = 0))
-      names(returnData) <- getMatchTransactionsWhitelist
+      returnData        <- data.frame(matrix(ncol = length(getMatchTransactionsExposedFields), nrow = 0))
+      names(returnData) <- names(getMatchTransactionsExposedFields)
       message(paste0("\nWarning:\n--> 0 rows of data in response.")) 
       return(returnData)
       
@@ -763,7 +715,7 @@ getMatchTransactions <- function(matchId,...){
         ########
         
         # Join the original data back on to the pressure info
-        returnData <- left_join(returnData,pressureData, by = c("id","trx_n")) %>% select(-"pressure.players",-"trx_n")
+        returnData <- left_join(returnData,pressureData, by = c("id","trx_n")) %>% dplyr::select(-"pressure.players",-"trx_n")
         
         # Turn pressure data into correct types
         returnData[getMatchTransactionsPressureCols[1:4]] <- lapply(returnData[getMatchTransactionsPressureCols[1:4]], as.character)
@@ -774,7 +726,7 @@ getMatchTransactions <- function(matchId,...){
       #################
       
       # get vector of missing cols between whitelist and response
-      missing <- setdiff(getMatchTransactionsWhitelist,names(returnData))
+      missing <- setdiff(getMatchTransactionsExposedFields,names(returnData))
       
       # Add on any of the missing columns in the response 
       returnData[missing] <- lapply(missing, function(x) rep(NA, nrow(returnData)))
@@ -884,6 +836,34 @@ getEntries <- function(matchId,...){
 #'Get squad stats for a match via a payload to the POST endpoint. 
 #'@param matchId A unique numerical identifier of a match.
 #'@param payload A nested list containing the parcels of data to be returned by the API. See: \code{createPayload()} as a method of simplifying this step.
+#'   \describe{
+#'     \item{\code{metricCodes (list)}}{ A list of the metric codes of the desired metrics (ie. \code{list("TACKLE","CHAIN_LAUNCH_CB_GB")})\cr 
+#'     Default Behaviour: If no metric code(s) are specifically selected, will return ALL valid metrics.}
+#'     
+#'     \item{\code{periods (list)}}{ A list of the desired match periods (ie. \code{list(1,2,3,4)})\cr
+#'     Default Behaviour: If no period(s) are specifically selected, will return data for the MATCH.}
+#'     
+#'     \item{\code{zones (list)}}{ A list of the desired zones (ie. \code{list("AM","D50")})\cr
+#'     Default Behaviour: If no zones are specifically selected, will return data for ALL zones.}
+#'     
+#'     \item{\code{team (character)}}{ A code for which squad to return data for (Squad-Only Parameter) (ie. \code{"home"} or \code{"away"}\cr
+#'     Default Behaviour: If no team is selected, will return data for BOTH teams}
+#'     
+#'     \item{\code{context (character)}}{ The context in which the data will be returned (Squad‐only parameter) (ie. \code{"For"}, \code{"Against"}, \code{"diff"})\cr
+#'     Default Behaviour: If no context is specifically selected, will return data in the 'For' context.}
+#'     
+#'     \item{\code{id (character)}}{ A user‐settable identifier for the given payload, e.g. \code{"Q1_F50_Tackles"})\cr
+#'     Default Behaviour: If no id is specifically passed in to a given payload list, the given list(s) will have their index in the payload order returned as an integer starting from 0.}
+#'     
+#'     \item{\code{lastXseconds (numeric)}}{ Limits statistics to counting events that occurred in the last X number of seconds (ie. lastXseconds = 300 will return data from the last 5 minutes)\cr
+#'     Default Behaviour: If no lastXseconds value is specifically supplied, NO filter on match period seconds will be applied.}
+#'     
+#'     \item{\code{fromPeriodSeconds (numeric)}}{ Limits statistics to counting events from this point in the period/match (ie. fromPeriodSeconds = 300 will return data up to the first 5 minutes onwards)\cr
+#'     Default Behaviour: If no fromPeriodSeconds value is specifically supplied, NO filter on match period seconds will be applied.}
+#'     
+#'     \item{\code{toPeriodSeconds (numeric)}}{ Limits statistics to counting events to this point in the period/match (ie. toPeriodSeconds = 300 will return data from the first 5 minutes onwards)\cr
+#'     Default Behaviour: If no toPeriodSeconds value is specifically supplied, NO filter on match period seconds will be applied.}
+#'   }
 #'@param info A logical (\code{TRUE/FALSE}) to include the payload information alongside the data for each payload. Defaults to \code{FALSE}
 #'@param verbose  A logical (\code{TRUE/FALSE}) indicating whether to enable verbose messaging to the console. When set to \code{TRUE}, the function will print additional information and progress messages to the console to provide a more detailed view of its execution. Defaults to \code{FALSE} for a quieter output.
 #'@param ... Arguments to be passed to internal functions, such as \code{envir} or \code{version}.
@@ -899,7 +879,6 @@ getEntries <- function(matchId,...){
 #'    \item \code{value} The numeric metric value with no formatting applied.
 #'    \item \code{display} The formatted metric value as a text string.
 #'    \item \code{id} A unique identifier string able to be supplied by the user for each list in the payload. Defaults to numerical index starting at 0. 
-#'    
 #'    \item \code{info.metric.codes} (when \code{info = TRUE}) The metric code(s) supplied to the specific list in the payload for that row of data.
 #'    \item \code{info.periods} (when \code{info = TRUE}) The period(s) supplied to the specific list in the payload for that row of data.
 #'    \item \code{info.zones} (when \code{info = TRUE}) The zone(s) supplied to the specific list in the payload for that row of data.
@@ -907,9 +886,23 @@ getEntries <- function(matchId,...){
 #'    \item \code{info.context} (when \code{info = TRUE}) The match context supplied to the specific list in the payload for that row of data.
 #'}
 #'@examples
-#'getSquadStatsPOST(matchId = 120390401, payload = squadPayload, info = T, verbose = T)
+#'# Payload Example:
+#'squadPOSTPayloadExample <- list(
+#'  squadMetricRequests = list(
+#'    list(
+#'      metricCodes = list("TACKLE"),
+#'      periods     = list(1),
+#'      zones       = list("F50"),
+#'      context     = "For",
+#'      id          = "Q1_F50_Tackles"
+#'    )
+#'  )
+#')
+#'
+#'# Function Run:
+#'getSquadStatsPOST(matchId = 120390401, payload = squadPOSTPayloadExample, info = T, verbose = T)
 #'@export
-getSquadStatsPOST <- function(matchId, payload, info = FALSE, verbose = F, ...){
+getSquadStatsPOST <- function(matchId, payload, info = FALSE, verbose = FALSE, ...){
   
   if(sub("MetricRequests", "", names(payload)) == "squad"){
     fieldsToCheck <- c("metricCodes", "team", "periods", "zones")
@@ -959,12 +952,12 @@ getSquadStatsPOST <- function(matchId, payload, info = FALSE, verbose = F, ...){
       callInfo <- listResponse[[2]] %>%                              # [[2]] gives the player/squad metric requests included in the payload
         mutate_if(is.list, simplify_all) %>%                         # Flatten out (necessary)
         mutate(!!!setNames(rep(NA, length(missing)), missing)) %>%   # Create cols for any of the missing params
-        mutate(metricCodes = ifelse(is.na(metricCodes) | metricCodes   == "NULL", "All Available" ,gsub('["c()]', '', metricCodes)) , # This line handles if the given input wasnt supplied, and assigns a default value to go into the info
-               periods     = ifelse(is.na(periods)     | periods       == "NULL", "Match" ,gsub('["c()]', '', periods)) ,             # This line handles if the given input wasnt supplied, and assigns a default value to go into the info   
-               team        = ifelse(is.na(team)        | team          == "NULL", "Both"  ,gsub('["c()]', '', team)),                 # This line handles if the given input wasnt supplied, and assigns a default value to go into the info
-               zones       = ifelse(is.na(zones)       | zones         == "NULL", "All"   ,gsub('["c()]', '', zones)),                # This line handles if the given input wasnt supplied, and assigns a default value to go into the info
-               context     = ifelse(is.na(context)     | zones == "NULL", "For"  ,gsub('["c()]', '', context)) ,                      # This line handles if the given input wasnt supplied, and assigns a default value to go into the info
-               lastXSeconds= ifelse(is.na(lastXSeconds)| lastXSeconds  == "NULL", "All"   ,gsub('["c()]', '', lastXSeconds)))         # This line handles if the given input wasnt supplied, and assigns a default value to go into the info
+        mutate(metricCodes = ifelse(is.na(metricCodes) | metricCodes   == "NULL", "All Available" ,gsub("^c\\(|\\)$|\"", "", metricCodes)) , # This line handles if the given input wasnt supplied, and assigns a default value to go into the info
+               periods     = ifelse(is.na(periods)     | periods       == "NULL", "Match" ,gsub("^c\\(|\\)$|\"", "", periods)) ,             # This line handles if the given input wasnt supplied, and assigns a default value to go into the info   
+               team        = ifelse(is.na(team)        | team          == "NULL", "Both"  ,gsub("^c\\(|\\)$|\"", "", team)),                 # This line handles if the given input wasnt supplied, and assigns a default value to go into the info
+               zones       = ifelse(is.na(zones)       | zones         == "NULL", "All"   ,gsub("^c\\(|\\)$|\"", "", zones)),                # This line handles if the given input wasnt supplied, and assigns a default value to go into the info
+               context     = ifelse(is.na(context)     | context       == "NULL", "For"   ,gsub("^c\\(|\\)$|\"", "", context)) ,             # This line handles if the given input wasnt supplied, and assigns a default value to go into the info
+               lastXSeconds= ifelse(is.na(lastXSeconds)| lastXSeconds  == "NULL", "All"   ,gsub("^c\\(|\\)$|\"", "", lastXSeconds)))         # This line handles if the given input wasnt supplied, and assigns a default value to go into the info
       
       # Select exposed fields (getPlayerStatsPOST_info_ExposedFields) & rename columns
       callInfo        <- callInfo[, getSquadStatsPOST_info_ExposedFields]
@@ -988,6 +981,31 @@ getSquadStatsPOST <- function(matchId, payload, info = FALSE, verbose = F, ...){
 #'Get player stats for a match via a payload to the POST endpoint. 
 #'@param matchId A unique numerical identifier of a match.
 #'@param payload A nested list containing the parcels of data to be returned by the API. See: \code{createPayload()} as a method of simplifying this step.
+#'   \describe{
+#'     \item{\code{metricCodes (list)}}{ A list of the metric codes of the desired metrics (ie. \code{list("TACKLE","CHAIN_LAUNCH_CB_GB")})\cr 
+#'     Default Behaviour: If no metric code(s) are specifically selected, will return ALL valid metrics.}
+#'     
+#'     \item{\code{periods (list)}}{ A list of the desired match periods (ie. \code{list(1,2,3,4)})\cr
+#'     Default Behaviour: If no period(s) are specifically selected, will return data for the MATCH.}
+#'     
+#'     \item{\code{zones (list)}}{ A list of the desired zones (ie. \code{list("AM","D50")})\cr
+#'     Default Behaviour: If no zones are specifically selected, will return data for ALL zones.}
+#'     
+#'     \item{\code{context (character)}}{ The context in which the data will be returned (Squad‐only parameter) (ie. \code{"For"}, \code{"Against"}, \code{"diff"})\cr
+#'     Default Behaviour: If no context is specifically selected, will return data in the 'For' context.}
+#'     
+#'     \item{\code{id (character)}}{ A user‐settable identifier for the given payload, e.g. \code{"Q1_F50_Tackles"})\cr
+#'     Default Behaviour: If no id is specifically passed in to a given payload list, the given list(s) will have their index in the payload order returned as an integer starting from 0.}
+#'     
+#'     \item{\code{lastXseconds (numeric)}}{ Limits statistics to counting events that occurred in the last X number of seconds (ie. lastXseconds = 300 will return data from the last 5 minutes)\cr
+#'     Default Behaviour: If no lastXseconds value is specifically supplied, NO filter on match period seconds will be applied.}
+#'     
+#'     \item{\code{fromPeriodSeconds (numeric)}}{ Limits statistics to counting events from this point in the period/match (ie. fromPeriodSeconds = 300 will return data up to the first 5 minutes onwards)\cr
+#'     Default Behaviour: If no fromPeriodSeconds value is specifically supplied, NO filter on match period seconds will be applied.}
+#'     
+#'     \item{\code{toPeriodSeconds (numeric)}}{ Limits statistics to counting events to this point in the period/match (ie. toPeriodSeconds = 300 will return data from the first 5 minutes onwards)\cr
+#'     Default Behaviour: If no toPeriodSeconds value is specifically supplied, NO filter on match period seconds will be applied.}
+#'   }
 #'@param info A logical (\code{TRUE/FALSE}) to include the payload information alongside the data for each payload. Defaults to \code{FALSE}
 #'@param verbose  A logical (\code{TRUE/FALSE}) indicating whether to enable verbose messaging to the console. When set to \code{TRUE}, the function will print additional information and progress messages to the console to provide a more detailed view of its execution. Defaults to \code{FALSE} for a quieter output.
 #'@param ... Arguments to be passed to internal functions, such as \code{envir} or \code{version}.
@@ -1013,7 +1031,21 @@ getSquadStatsPOST <- function(matchId, payload, info = FALSE, verbose = F, ...){
 #'    \item \code{info.context} (when \code{info = TRUE}) The match context supplied to the specific list in the payload for that row of data.
 #'}
 #'@examples
-#'getSquadStatsPOST(matchId = 120390401, payload = squadPayload, info = T, verbose = T)
+#'# Payload Example:
+#'playerPOSTPayloadExample <- list(
+#'  playerMetricRequests = list(
+#'    list(
+#'      metricCodes = list("KICK", "MARK", "HANDBALL", "GOAL"),
+#'      periods     = list(),
+#'      zones       = list(),
+#'      team        = "home" ,
+#'      id          = "homeTeam (kick,mark,handball,goal)"
+#'    )
+#'   )
+#' )
+#'
+#'# Function Run:
+#'getPlayerStatsPOST(matchId = 120390401, payload = playerPOSTPayloadExample, info = T, verbose = T)
 #'@export
 getPlayerStatsPOST <- function(matchId, payload, info = FALSE, verbose = FALSE, ...){
   
@@ -1073,11 +1105,11 @@ getPlayerStatsPOST <- function(matchId, payload, info = FALSE, verbose = FALSE, 
       callInfo <- listResponse[[2]] %>%                              # [[2]] gives the player/squad metric requests included in the payload
         mutate_if(is.list, simplify_all) %>%                         # Flatten out (necessary)
         mutate(!!!setNames(rep(NA, length(missing)), missing)) %>%   # Create cols for any of the missing params
-        mutate(metricCodes = ifelse(is.na(metricCodes) | metricCodes   == "NULL", "All Available" ,gsub('["c()]', '', metricCodes)) , # This line handles if the given input wasnt supplied, and assigns a default value to go into the info
-               periods     = ifelse(is.na(periods)     | periods       == "NULL", "Match" ,gsub('["c()]', '', periods)) ,             # This line handles if the given input wasnt supplied, and assigns a default value to go into the info   
-               team        = ifelse(is.na(team)        | team          == "NULL", "Both"  ,gsub('["c()]', '', team)),                 # This line handles if the given input wasnt supplied, and assigns a default value to go into the info
-               zones       = ifelse(is.na(zones)       | zones         == "NULL", "All"   ,gsub('["c()]', '', zones)),                # This line handles if the given input wasnt supplied, and assigns a default value to go into the info
-               lastXSeconds= ifelse(is.na(lastXSeconds)| lastXSeconds  == "NULL", "All"   ,gsub('["c()]', '', lastXSeconds)))         # This line handles if the given input wasnt supplied, and assigns a default value to go into the info
+        mutate(metricCodes = ifelse(is.na(metricCodes) | metricCodes   == "NULL", "All Available" ,gsub("^c\\(|\\)$|\"", "", metricCodes)) , # This line handles if the given input wasnt supplied, and assigns a default value to go into the info
+               periods     = ifelse(is.na(periods)     | periods       == "NULL", "Match" ,gsub("^c\\(|\\)$|\"", "", periods)) ,             # This line handles if the given input wasnt supplied, and assigns a default value to go into the info   
+               team        = ifelse(is.na(team)        | team          == "NULL", "Both"  ,gsub("^c\\(|\\)$|\"", "", team)),                 # This line handles if the given input wasnt supplied, and assigns a default value to go into the info
+               zones       = ifelse(is.na(zones)       | zones         == "NULL", "All"   ,gsub("^c\\(|\\)$|\"", "", zones)),                # This line handles if the given input wasnt supplied, and assigns a default value to go into the info
+               lastXSeconds= ifelse(is.na(lastXSeconds)| lastXSeconds  == "NULL", "All"   ,gsub("^c\\(|\\)$|\"", "", lastXSeconds)))         # This line handles if the given input wasnt supplied, and assigns a default value to go into the info
       
       # Select exposed fields (getPlayerStatsPOST_info_ExposedFields) & rename columns
       callInfo        <- callInfo[, getPlayerStatsPOST_info_ExposedFields]
@@ -1256,13 +1288,13 @@ getAFLClubTrxFeed <- function(matchId,...) {
       twoplayerstats<-twoplayerstatsbase %>%
         rbind(dummytwoplayerstats) %>%
         arrange(trx.id, sequence) %>%
-        select(match.id,trx.id,stat.code, sequence, person.fullname, person.id) %>%
+        dplyr::select(match.id,trx.id,stat.code, sequence, person.fullname, person.id) %>%
         pivot_wider(names_from = sequence, values_from = c(person.id, person.fullname))
       # Handle normally
     } else {
       twoplayerstats<-twoplayerstatsbase %>%
         arrange(trx.id, sequence) %>%
-        select(match.id,trx.id,stat.code, sequence, person.fullname, person.id) %>%
+        dplyr::select(match.id,trx.id,stat.code, sequence, person.fullname, person.id) %>%
         pivot_wider(names_from = sequence, values_from = c(person.id, person.fullname))
     }
     
@@ -1466,7 +1498,7 @@ getSquadSummaryFile <- function(matchId,...) {
   
   # Do arithmetic
   returnData <- returnData %>% 
-    select(-PLATFORM_METRIC_CODE)%>%
+    dplyr::select(-PLATFORM_METRIC_CODE)%>%
     pivot_wider(names_from = SF_METRIC_CODE, values_from = value) %>%
     group_by(PERIOD, SQUAD_ID) %>%
     mutate(
@@ -1513,7 +1545,7 @@ getSquadSummaryFile <- function(matchId,...) {
     )  %>%
     group_by(PERIOD, SQUAD_ID, ZONE_LOGICAL_AFL) %>%
     mutate( INTERCEPT_OTHER              = INTERCEPT_OTHER + INTERCEPT_OTHER_KO) %>%
-    select(-INTERCEPT_OTHER_KO) # this should not be required - double check (will be removed in line 222)
+    dplyr::select(-INTERCEPT_OTHER_KO) # this should not be required - double check (will be removed in line 222)
   
   # Feature engineering
   returnData$MATCH_ID       <- matchDetails$id[1]
@@ -1601,7 +1633,7 @@ getPlayerSummaryFile <- function(matchId,...) {
   periods <- data.frame("PERIOD"   = c(1:maxPeriod))
   zones   <- data.frame("ZONE_LOGICAL_AFL"= c('D50','DM','AM','F50','X')) 
   players <- getMatchPersons(matchId) %>%
-    select(PERSON_ID = 'person.id',FULLNAME = 'person.name', SQUAD_ID= 'squad.id', person.surname) %>%
+    dplyr::select(PERSON_ID = 'person.id',FULLNAME = 'person.name', SQUAD_ID= 'squad.id', person.surname) %>%
     mutate(PERSON_ID = as.numeric(PERSON_ID))
   
   # Remove and instantiate inside package - rename as player/squad versions
@@ -1683,7 +1715,7 @@ getPlayerSummaryFile <- function(matchId,...) {
   
   # Pivot to wide & calculate additional metrics
   returnData <- returnData %>% 
-    select(-PLATFORM_METRIC_CODE, - match.id, - squad.name, - squad.code, -player.name, -player.display, -stat.name) %>%
+    dplyr::select(-PLATFORM_METRIC_CODE, - match.id, - squad.name, - squad.code, -player.name, -player.display, -stat.name) %>%
     pivot_wider(names_from = SF_METRIC_CODE, values_from = value) %>%
     group_by(PERIOD, SQUAD_ID, PERSON_ID) %>%
     mutate(
@@ -1815,6 +1847,12 @@ getPlayerSummaryFile <- function(matchId,...) {
 #'   \item \code{stoppage.attendance.code} A short code representing the type of stoppage being attended.
 #'   \item \code{stoppage.attendance.id} The transaction id that the stoppage attendance is associated to.
 #'   \item \code{stoppage.attendance.period.seconds} The elapsed time (in seconds) within the period of the particular stoppage attendance.
+#'   \item \code{score.squad.id} The squad.id of the squad responsible for the score.
+#'   \item \code{score.type} The type of score from the clearance.
+#'   \item \code{score.points} The points awarded for the score.
+
+#'   - The below fields will only be present when \code{stoppageAttendees = TRUE}\cr
+
 #'   \item \code{stoppage.attendance.home.fullname1} when \code{stoppageAttendees = TRUE}: The full name of the first player attending the stoppage for the home squad.
 #'   \item \code{stoppage.attendance.home.displayname1} when \code{stoppageAttendees = TRUE}: The display name of the first player attending the stoppage for the home squad.
 #'   \item \code{stoppage.attendance.home.personId1} when \code{stoppageAttendees = TRUE}: A unique numerical identifier for the first player attending the stoppage for the home squad.
@@ -1842,6 +1880,7 @@ getPlayerSummaryFile <- function(matchId,...) {
 #' }
 #'@examples
 #'getStoppages(matchId = 120390401)
+#'getStoppages(matchId = 120390401, stoppageAttendees = TRUE)
 #'@export
 getStoppages <- function(matchId, stoppageAttendees=FALSE,...){
   
@@ -1857,8 +1896,8 @@ getStoppages <- function(matchId, stoppageAttendees=FALSE,...){
     
     # Handle if successful response but no events happened yet (second element of list empty)
     if(is_empty(listResponse[[1]])) {
-      returnData        <- data.frame(matrix(ncol = length(getStoppagesWhitelist), nrow = 0))
-      names(returnData) <- getStoppagesWhitelist
+      returnData        <- data.frame(matrix(ncol = length(getStoppagesExposedFields), nrow = 0))
+      names(returnData) <- names(getStoppagesExposedFields)
       message(paste0("\nWarning:\n--> 0 rows of data in response.")) 
       return(returnData)
     } else {
@@ -1898,9 +1937,8 @@ getStoppages <- function(matchId, stoppageAttendees=FALSE,...){
         returnData <- cbind(returnData, home[match_idx_home, -which("stoppages.id" %in% names(home))])  
         returnData <- cbind(returnData, away[match_idx_away, -which("stoppages.id" %in% names(away))])  
         
-        # Add stoppageAttendees column names to getStoppagesWhitelist & getStoppagesExposedFields to run through below code ([-1] removes stoppages.id triplication)
+        # Add stoppageAttendees column names getStoppagesExposedFields to run through below code ([-1] removes 'stoppages.id' triplication)
         # Note: Changes here are locally scoped to within the function
-        getStoppagesWhitelist     <- c(getStoppagesWhitelist, getStoppages_homeNames[-1], getStoppages_awayNames[-1])  
         getStoppagesExposedFields <- c(getStoppagesExposedFields, setNames(getStoppages_homeNames[-1], getStoppages_homeNames[-1]), setNames(getStoppages_awayNames[-1], getStoppages_awayNames[-1]))
         
       } # close stoppageAttendees
@@ -1911,7 +1949,7 @@ getStoppages <- function(matchId, stoppageAttendees=FALSE,...){
     } # close response has rows
     
     # Get vector of the missing fields (IF ANY) in the call info
-    missing <- setdiff(getStoppagesWhitelist ,names(returnData))
+    missing <- setdiff(getStoppagesExposedFields ,names(returnData))
     
     # Add on any of the missing columns in the response 
     returnData[missing] <- lapply(missing, function(x) rep(NA, nrow(returnData)))
@@ -1924,6 +1962,156 @@ getStoppages <- function(matchId, stoppageAttendees=FALSE,...){
   } # close rawResponse is not NULL
 } 
 
+#'Statistic Flow
+#'
+#'Get time coded transactions for given metric(s) occurring in a match
+#'@param matchId A unique numerical identifier of a match.
+#'@param metric A text string of specific metric code(s) to be returned. This will result in the endpoint only returning these specific metrics. Note this endpoint is case sensitive and only works with metric codes (ie. \code{c("TACKLE", "GOAL")}
+#'@param period A numerical indicator of a period to filter results within a match. Accepts integer values.
+#'@param zone A text indicator of a zone on the field to filter results within a match. Accepts string values: \code{"D50","DM","AM","F50","CB"}.
+#'@param team A (case-sensitive) text string of the team to return metrics for. Either \code{"home"} or \code{"away"}. Not passing anything to this param will return both teams.
+#'@param limit The number of transactions per page to return. The limit and default value is 5000 transactions per page.
+#'@param orderBy Order transactions by ascending or descending based on transaction id. Default value is \code{"asc"}.
+#'@param ... Arguments to be passed to internal functions, such as \code{envir} or \code{version}.
+#'@return A data frame with a list of metrics for a match for each player.
+#'\itemize{
+#'    \item \code{trx.id}  A unique numerical identifier for a given transaction, used for ordering chronologically.
+#'    \item \code{period} The period of the transaction.
+#'    \item \code{period.secs} The elapsed time within the period of a transaction. 
+#'    \item \code{zone.logical} The zone in which the transaction takes place, relative to the squad in possession.
+#'    \item \code{fullname} The full name of the player.
+#'    \item \code{person.id} A unique numerical identifier of the player.
+#'    \item \code{squad.code} A short code to represent the squad.
+#'    \item \code{squad.id} A unique numerical identifier of the squad.
+#'    \item \code{metric.code} The metric code (ALL_CAPS format).
+#'    \item \code{value} The numeric metric value with no formatting applied.
+#'}
+#'@examples
+#'getStatisticFlow(216085122)
+#'getStatisticFlow(216085122,metric="TACKLE",period=1,zone='D50')
+#'@export
+getStatisticFlow <- function(matchId, metric, period = NULL, zone = NULL, team = NULL, limit = NULL, orderBy = NULL, ...){
+  
+  # Base URL
+  baseString   <- paste('matches',matchId,'statistics/flow?',sep='/')                                                 
+  
+  # Hit API
+  rawResponse <- cdAPIresponse(endpoint = paste0(baseString, optionalParams(
+    "metric"       = metric , 
+    "period"       = period , 
+    "zone"         = zone   , 
+    "team"         = team   , 
+    "limit"        = limit  , 
+    "orderBy"      = orderBy 
+  )), pagination = TRUE, ...)
+  
+  if(is.null(rawResponse)){
+    return(rawResponse)
+  } else {
+    # If the raw response is successful, but contains 0 rows
+    if(resp_body_json(rawResponse[[1]],simplifyVector = TRUE)$metaData$totalRecords==0){
+      returnData        <- data.frame(matrix(ncol = length(getStatisticFlowExposedFields), nrow = 0))
+      names(returnData) <- names(getStatisticFlowExposedFields)
+      message(paste0("\nWarning:\n--> 0 rows of data in response.")) 
+      return(returnData)
+    } else {
+      
+      # Iterate through all pages of rawResponse using the flattenPaginatedTrx() function to unnest
+      returnData <- bind_rows(lapply(rawResponse, flattenPaginatedTrx))
+      
+      # Get vector of the missing fields (IF ANY) in the call info
+      missing <- setdiff(getStatisticFlowWhitelist,names(returnData))
+      
+      # Add on any of the missing columns in the response 
+      returnData[missing] <- lapply(missing, function(x) rep(NA, nrow(returnData)))
+    }
+    
+    # Select exposed fields (getStatisticFlowExposedFields) & rename columns
+    returnData        <- returnData[, getStatisticFlowExposedFields]
+    names(returnData) <- names(getStatisticFlowExposedFields)
+  }
+  return(returnData)
+}
 
-
-
+#'Match Ruck Contest Summary
+#'
+#'Get a summary of ruck contest statistics for a given match.
+#'@param matchId A unique numerical identifier of a match.
+#'@param stoppageType Filter statistics to a specific type(s) of ruck contest, any one of: \cr
+#'\code{'centreBounce', 'ballUp', 'throwIn'}\cr
+#'
+#'Can accept multiple arguments in a character vector\cr(ie. \code{stoppageType = c('ballUp', 'throwIn')}) 
+#'@param ... Arguments to be passed to internal functions, such as \code{envir} or \code{version}.
+#'@return A data frame with a summary of ruck contest statistics for a given match.
+#'\itemize{
+#'  \item \code{match.id}: The unique identifier for the match.
+#'  \item \code{total.contests}: The total number of ruck contests between the home & away ruck combination.
+#'  \item \code{home.ruck.squad.code}: Squad code for the home team's ruckman.
+#'  \item \code{home.ruck.squad.id}: Squad ID for the home team's ruckman.
+#'  \item \code{home.ruck.fullname}: Fullname of the home team's ruckman.
+#'  \item \code{home.ruck.display.name}: Display name of the home team's ruckman.
+#'  \item \code{home.ruck.person.id}: Person ID of the home team's ruckman.
+#'  \item \code{away.ruck.squad.code}: Squad code for the away team's ruckman.
+#'  \item \code{away.ruck.squad.id}: Squad ID for the away team's ruckman.
+#'  \item \code{away.ruck.fullname}: Fullname of the away team's ruckman.
+#'  \item \code{away.ruck.display.name}: Display name of the away team's ruckman.
+#'  \item \code{away.ruck.person.id}: Person ID of the away team's ruckman.
+#'  \item \code{home.ruck.hitouts}: Total number of hitouts by the home team's ruckman.
+#'  \item \code{home.ruck.hitouts.advantage}: Total number of hitouts to advantage by the home team's ruckman.
+#'  \item \code{home.ruck.hitouts.sharked}: Total number of hitouts sharked from the home team's ruckman.
+#'  \item \code{home.ruck.first.possessions}: Total number of first possessions gathered by the home team while the given home ruck was in the ruck contest.  
+#'  \item \code{home.ruck.clearances}: Total number of clearances gathered by the home team while the given home ruck was in the ruck contest.  
+#'  \item \code{home.ruck.goals}: Total number of goals gathered by the home team while the given home ruck was in the ruck contest (in home team clearance chains).
+#'  \item \code{home.ruck.behinds}: Total number of behinds gathered by the home team while the given home ruck was in the ruck contest (in home team clearance chains).
+#'  \item \code{home.ruck.points}: Total number of points gathered by the home team while the given home ruck was in the ruck contest (in home team clearance chains).
+#'  \item \code{away.ruck.hitouts}: Total number of hitouts by the away team's ruckman.
+#'  \item \code{away.ruck.hitouts.advantage}: Total number of hitouts to advantage by the away team's ruckman.
+#'  \item \code{away.ruck.hitouts.sharked}: Total number of hitouts sharked from the away team's ruckman.
+#'  \item \code{away.ruck.first.possessions}: Total number of first possessions gathered by the away team while the given away ruck was in the ruck contest.  
+#'  \item \code{away.ruck.clearances}: Total number of clearances gathered by the away team while the given away ruck was in the ruck contest.
+#'  \item \code{away.ruck.goals}: Total number of goals gathered by the away team while the given away ruck was in the ruck contest (in away team clearance chains).
+#'  \item \code{away.ruck.behinds}: Total number of behinds gathered by the away team while the given away ruck was in the ruck contest (in away team clearance chains).
+#'  \item \code{away.ruck.points}: Total number of points gathered by the away team while the given away ruck was in the ruck contest (in away team clearance chains).
+#'}
+#'@examples
+#'getRuckContests(120390401)
+#'getRuckContests(120390401, stoppageType=c('ballUp', 'throwIn'))
+#'@export
+getRuckContests <- function(matchId, stoppageType = NULL, ...){
+  
+  # Base URL
+  baseString   <- paste('matches',matchId,'summary/ruckcontests?',sep='/')
+  
+  # Hit API
+  rawResponse <- cdAPIresponse(endpoint = paste0(baseString, optionalParams("stoppageType" = stoppageType)),...)
+  
+  if(is.null(rawResponse)){
+    return(rawResponse)
+  } else {
+    # Convert response to flat list
+    listResponse <- rawResponse %>% resp_body_json(simplifyVector = TRUE)
+    
+    # Handle if successful response but no events happened yet (second element of list empty)
+    if(is_empty(listResponse[[2]])) {
+      returnData        <- data.frame(matrix(ncol = length(getRuckContestsExposedFields), nrow = 0))
+      names(returnData) <- names(getRuckContestsExposedFields)
+      message(paste0("\nWarning:\n--> 0 rows of data in response.")) 
+      return(returnData)
+    } else {
+      # Convert list into DF
+      returnData <- listResponse %>% as.data.frame() %>% jsonlite::flatten()
+      
+      # Get vector of the missing fields (IF ANY) in the call info
+      missing <- setdiff(getRuckContestsExposedFields,names(returnData))
+      
+      # Add on any of the missing columns in the response 
+      returnData[missing] <- lapply(missing, function(x) rep(NA, nrow(returnData)))
+    }
+    
+    # Select exposed fields (getRuckContests) & rename columns
+    returnData        <- returnData[, getRuckContestsExposedFields]
+    names(returnData) <- names(getRuckContestsExposedFields)
+    
+    return(returnData)
+  }
+} 

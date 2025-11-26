@@ -122,11 +122,13 @@ extractError <- function(response) {
   if(response %>% resp_has_body()){
     # Extract body from non-200 response
     responseBody <- response %>% resp_body_string()
-    
-    # Handle cases where the response is wrapped in formatting
+    # Handle cases where the response is wrapped in formatting 
     if(substr(responseBody,1,1)=="{"){
       responseBody <- responseBody %>% fromJSON()
-    } 
+    } else if(substr(responseBody,1,1)== "<"){ # 414: URI too long falls in here
+      message("Error(s) [Status: ",response$status,"]:\n",paste0("--> ",regmatches(responseBody, regexec("<(?:h1|title)[^>]*>\\s*([^<]+)\\s*</(?:h1|title)>", responseBody, perl=TRUE))[[1]][2]))
+      break
+    }
     # Collate and print all errors experienced
     lengthList   <- length(responseBody)
     lengthErrors <- length(responseBody[[lengthList]])
@@ -136,4 +138,111 @@ extractError <- function(response) {
     message("Error [Status: ",response$status,"]:\n--> There was no accompanying error message for this ",response$status," error from the API.")
     return(NULL)
   }
+}
+
+#'optionalParams 
+#'
+#'This function is used inside of functions with multiple optional arguments that when passed in dictate the URL path (as opposed to functionality within the R function - an example of within-function would be 'stoppageAttendees' param in getStoppages)
+#'optionalParams is used in conjunction with cdAPIresponse() (ie. \code{rawResponse <- cdAPIresponse(endpoint = paste0(baseString, optionalParams("period" = period, "zone" = zone...}
+#'@return A string with the URL connection and value(s) (ie. "period=1&zone=DM&metric=TACKLE&metric=GOAL&metric=HANDBALL&lastXseconds=500")
+#'@examples
+#'optionalParams("period" = period, "zone" = zone, "context" = context, "metric" = metric, "team" = team, "lastXseconds" = lastXseconds, "from" = from, "to" = to)
+#'@keywords internal
+optionalParams <- function(...) {
+  
+  # List the params passed in
+  params <- list(...)
+  
+  # Drop any NULLs
+  params <- Filter(Negate(is.null), params)  
+  
+  # Return empty string if nothing makes it to this point
+  if (!length(params)) return("")
+  
+  # Align to handle any instances of vectors being passed - ie. metric = c("TACKLE","GOAL")
+  paramNames  <- rep(names(params), lengths(params))   # repeat names for vector args
+  paramValues <- unlist(params, use.names = FALSE)
+  
+  paste(paramNames, paramValues, sep = "=", collapse = "&")
+  
+}
+
+#'fetchAllLeagues 
+#'
+#'Helper function for inside getLeagueLevelsInfo(): used to hit /leagues endpoint for all leagues
+#'@return A DF with all info from /leagues endpoint
+#'@keywords internal
+fetchAllLeagues <- function(...){
+  cdAPIresponse(endpoint = paste0('leagues/'),...) %>%
+    resp_body_json(simplifyVector = TRUE) %>% 
+    as.data.frame() %>%
+    jsonlite::flatten()
+}
+
+#'fetchLevels 
+#'
+#'Helper function for inside getLeagueLevelsInfo(): used to get all the levels for a given leagueId
+#'@return A DF with level info for a given leagueId
+#'@keywords internal
+fetchLevels <- function(leagueId,...) {
+  cdAPIresponse(endpoint = paste('leagues',leagueId,'levels',sep='/'),...) %>%
+    resp_body_json(simplifyVector = TRUE) %>%
+    as.data.frame() %>%
+    jsonlite::flatten()
+}
+
+#'fetchLeagueLevelCombos 
+#'
+#'Helper function for inside getLeagueLevelsInfo(): used to get the league-level info for a given league-level combo
+#'@return A DF with info for a given leagueId & levelId
+#'@keywords internal
+fetchLeagueLevelCombos <- function(leagueId, levelId,...) {
+  cdAPIresponse(endpoint = paste('leagues',leagueId,'levels',levelId,sep='/'),...) %>%
+    resp_body_json(simplifyVector = TRUE) %>% 
+    as.data.frame() %>%
+    jsonlite::flatten()
+}
+
+#'quietStop 
+#'
+#'Helper function used inside of getTotalPages() for getStatisticFlow() to stop iteration over pages without warnings printed to console.
+#'@keywords internal
+quietStop <- function() {
+  #old <- getOption("show.error.messages")
+  on.exit(options(show.error.messages = getOption("show.error.messages")), add = TRUE)
+  options(show.error.messages = FALSE)   # turn off printing now
+  stop(call. = FALSE)                    # still halts iteration
+}
+
+#'getTotalPages 
+#'
+#'Helper function used in getStatisticFlow() to stop iteration over pages without warnings printed to console
+#'@return EITHER an error message from extractError() or the total number of pages in the API request to iterate over 
+#'@keywords internal
+getTotalPages <- function(resp){
+  # [NOTE]: function input has to be called 'resp' here
+  status <- httr2::resp_status(resp)
+  if(status != 200){
+    extractError(resp) # Prints my error handling
+    quietStop()        # This kills the iteration process ofiterate_with_offset() - to kill the iteration it requires a stop() message, this does so without printing anything else to console with stop()
+  } else {
+    metaData <- httr2::resp_body_json(resp)$metaData
+    # If successful response but no records are returned
+    if(metaData$totalRecords == 0 | metaData$totalPages == 0){
+      totalPages <- 1
+    } else {
+      totalPages <- metaData$totalPages
+    }
+  }
+}
+
+#'flattenPaginatedTrx 
+#'
+#'Helper function used in getStatisticFlow() to take a page of API response and flatten it into a single DF
+#'@return A flattened DF from a page of API response.
+#'@keywords internal
+flattenPaginatedTrx <- function(resp) {
+  # [NOTE]: function input has to be called 'resp' here
+  httr2::resp_body_json(resp, simplifyVector = T)[["transactions"]] %>%
+    tidyr::unnest(c("squad","person","metrics"), names_sep = "_", names_repair = "check_unique")
 }

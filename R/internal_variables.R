@@ -44,19 +44,6 @@ getSeasonExposedFields <- c(id                          = "season.id",
                             rounds.lastCompleted.end    = "lastRoundEnd"
 )
 
-#' getShotsWhitelist
-#'
-#' This vector contains all the possible columns that can be returned by hitting the endpoint within the getShots function.
-#' @keywords internal
-getShotsWhitelist <- c("matchId", "shots.matchTrxId", "shots.period", "shots.periodSecs", "shots.details.angleGroup",
-                       "shots.details.distanceGroup", "shots.details.origin", "shots.details.type", "shots.details.location.x",
-                       "shots.details.location.xStd", "shots.details.location.y", "shots.details.location.yStd", "shots.details.locationRotated.x",
-                       "shots.details.locationRotated.xStd", "shots.details.locationRotated.y", "shots.details.locationRotated.yStd",
-                       "shots.player.displayName", "shots.player.fullname", "shots.player.id", "shots.result.name", "shots.result.code",
-                       "shots.result.points", "shots.result.pointsExpected", "shots.result.accuracyExpected", "shots.score.homePoints",
-                       "shots.score.awayPoints", "shots.squad.code", "shots.squad.id", "shots.squad.name"
-)
-
 #' getShotsExposedFields
 #'
 #' This vector contains all the fields we're exposing in the getShots function and their equivalent renames.
@@ -233,82 +220,64 @@ getEntriesExposedFields <- c(match.id                                 = "matchId
                              entry.kick.result.location.rotated.y.std = "entries.details.kick.resultLocationRotated.yStd"
 )
 
-#' getMatchTransactionsWhitelist
-#'
-#' This vector contains all the possible columns that can be returned by hitting the endpoint within the getMatchTransactions function.
-#' @keywords internal
-getMatchTransactionsWhitelist <- c("matchId", "id", "code", "name",
-                                   "period","periodSecs", 
-                                   "homeScore", "awayScore",
-                                   "squad.name", "squad.code", "squad.id",
-                                   "person.fullname", "person.displayName", "person.id",
-                                   "pressure.squad.name", "pressure.squad.id", "pressure.squad.code", "pressure.name", "pressure.code",
-                                   "pressure.points", "pressure.fullname1", "pressure.displayname1", "pressure.personid1", "pressure.role1",
-                                   "pressure.fullname2", "pressure.displayname2", "pressure.personid2", "pressure.role2",
-                                   "zonePhysical","zoneLogical",
-                                   "location.x", "location.y", "location.xStd", "location.yStd", "locationRotated.x",
-                                   "locationRotated.y", "locationRotated.xStd", "locationRotated.yStd", "kicking.foot", "kicking.intent",
-                                   "kicking.distance", "kicking.direction", "details.inside50Direction", "details.inside50Intent",
-                                   "details.shotAngle", "details.shotDistance", "details.shotResult", "details.shotSource", "details.shotType",
-                                   "details.freeKickContext", "details.freeKickReason", "details.kickinDirection"
-)
-
 #' getMatchTransactionsExposedFields
 #'
 #' This vector contains all the fields we're exposing in the getMatchTransactions function and their equivalent renames.
 #' @keywords internal
-getMatchTransactionsExposedFields <- c(match.id            = "matchId",
-                                       trx.id              = "id",
-                                       stat.code           = "code",
-                                       stat.desc           = "name",
-                                       period              = "period",
-                                       period.secs         = "periodSecs",
-                                       score.home          = "homeScore",
-                                       score.away          = "awayScore",
-                                       squad.name          = "squad.name",
-                                       squad.code          = "squad.code",
-                                       squad.id            = "squad.id",
-                                       person.fullname     = "person.fullname",
-                                       person.displayName  = "person.displayName",
-                                       person.id           = "person.id",
-                                       pressure.squad.name = "pressure.squad.name", 
-                                       pressure.squad.id   = "pressure.squad.id",
-                                       pressure.squad.code = "pressure.squad.code",
-                                       pressure.name       = "pressure.name",
-                                       pressure.code       = "pressure.code",
-                                       pressure.points     = "pressure.points",
-                                       pressure.fullname1  = "pressure.fullname1",
-                                       pressure.displayname1 = "pressure.displayname1",
-                                       pressure.personid1 = "pressure.personid1",
-                                       pressure.role1      = "pressure.role1",
-                                       pressure.fullname2  = "pressure.fullname2",
-                                       pressure.displayname2 = "pressure.displayname2",
-                                       pressure.personid2  = "pressure.personid2",
-                                       pressure.role2      = "pressure.role2",
-                                       zone.physical       = "zonePhysical",
-                                       zone.logical        = "zoneLogical",
-                                       location.x          = "location.x",
-                                       location.y          = "location.y",
-                                       location.x.std      = "location.xStd",
-                                       location.y.std      = "location.yStd",
-                                       location.rotated.x  = "locationRotated.x",
-                                       location.rotated.y  = "locationRotated.y",
+getMatchTransactionsExposedFields <- c(match.id               = "matchId",
+                                       trx.id                 = "id",
+                                       stat.code              = "code",
+                                       stat.desc              = "name",
+                                       period                 = "period",
+                                       period.secs            = "periodSecs",
+                                       score.home             = "homeScore",
+                                       score.away             = "awayScore",
+                                       squad.name             = "squad.name",
+                                       squad.code             = "squad.code",
+                                       squad.id               = "squad.id",
+                                       person.fullname        = "person.fullname",
+                                       person.displayName     = "person.displayName",
+                                       person.id              = "person.id",
+                                       pressure.squad.name    = "pressure.squad.name", 
+                                       pressure.squad.id      = "pressure.squad.id",
+                                       pressure.squad.code    = "pressure.squad.code",
+                                       pressure.name          = "pressure.name",
+                                       pressure.code          = "pressure.code",
+                                       pressure.points        = "pressure.points",
+                                       pressure.fullname1     = "pressure.fullname1",
+                                       pressure.displayname1  = "pressure.displayname1",
+                                       pressure.personid1     = "pressure.personid1",
+                                       pressure.role1         = "pressure.role1",
+                                       pressure.fullname2     = "pressure.fullname2",
+                                       pressure.displayname2  = "pressure.displayname2",
+                                       pressure.personid2     = "pressure.personid2",
+                                       pressure.role2         = "pressure.role2",
+                                       zone.physical          = "zonePhysical",
+                                       zone.logical           = "zoneLogical",
+                                       location.x             = "location.x",
+                                       location.y             = "location.y",
+                                       location.x.std         = "location.xStd",
+                                       location.y.std         = "location.yStd",
+                                       location.rotated.x     = "locationRotated.x",
+                                       location.rotated.y     = "locationRotated.y",
                                        location.rotated.x.std = "locationRotated.xStd",
                                        location.rotated.y.std = "locationRotated.yStd",
-                                       kicking.foot        = "kicking.foot",
-                                       kicking.intent      = "kicking.intent",
-                                       kicking.distance    = "kicking.distance",
-                                       kicking.direction   = "kicking.direction",
-                                       inside50.direction  = "details.inside50Direction",
-                                       inside50.intent     = "details.inside50Intent",
-                                       shot.angle          = "details.shotAngle",
-                                       shot.distance       = "details.shotDistance",
-                                       shot.result         = "details.shotResult",
-                                       shot.source         = "details.shotSource",
-                                       shot.type           = "details.shotType",
-                                       freekick.context    = "details.freeKickContext",
-                                       freekick.reason     = "details.freeKickReason",
-                                       kickin.direction    = "details.kickinDirection"
+                                       kicking.foot           = "kicking.foot",
+                                       kicking.intent         = "kicking.intent",
+                                       kicking.distance       = "kicking.distance",
+                                       kicking.direction      = "kicking.direction",
+                                       inside50.direction     = "details.inside50Direction",
+                                       inside50.intent        = "details.inside50Intent",
+                                       shot.angle             = "details.shotAngle",
+                                       shot.distance          = "details.shotDistance",
+                                       shot.result            = "details.shotResult",
+                                       shot.source            = "details.shotSource",
+                                       shot.type              = "details.shotType",
+                                       freekick.context       = "details.freeKickContext",
+                                       freekick.reason        = "details.freeKickReason",
+                                       kickin.direction       = "details.kickinDirection" , 
+                                       time.capture.UTC       = "time.utcTimestamp", 
+                                       time.capture.flag      = "time.capturedTimestamp"
 )
 
 #' getMatchTransactionsPressureCols
@@ -868,49 +837,32 @@ twoplayerstats_empty <- data.frame(
   stringsAsFactors = FALSE
 )
 
-#' getVenueWhitelist
-#'
-#' This vector contains all the possible columns in the getVenue() function.
-#' @keywords internal
-getVenueWhitelist <- c(
-  "code", 
-  "dimensions.length", 
-  "dimensions.width", 
-  "id", 
-  "location.country.code", 
-  "location.country.id",  
-  "location.country.name", 
-  "location.country.state.id", 
-  "location.country.state.name", 
-  "location.country.state.code", 
-  "location.timezone", 
-  "matchId", 
-  "name"
-)
-
 #' getVenueExposedFields
 #'
 #' This vector contains all the fields we're exposing in the getVenueExposedFields function and their equivalent renames.
 #' @keywords internal
-getVenueExposedFields <- c(match.id='matchId',
-                           id = "id",
-                           name = "name",
-                           code = "code",
-                           country.id='location.country.id',
-                           country.name='location.country.name',
-                           country.code='location.country.code',
-                           state.id='location.country.state.id',
-                           state.name='location.country.state.name',
-                           state.code='location.country.state.code',
-                           timezone='location.timezone',
-                           length='dimensions.length',
-                           width='dimensions.width')
-
-
-
-
-
-
+getVenueExposedFields <- c(match.id    = 'matchId',
+                           id          = 'id',
+                           name        = 'name',
+                           code        = 'code',
+                           country.id  = 'location.country.id',
+                           country.name= 'location.country.name',
+                           country.code= 'location.country.code',
+                           state.id    = 'location.country.state.id',
+                           state.name  = 'location.country.state.name',
+                           state.code  = 'location.country.state.code',
+                           timezone    = 'location.timezone',
+                           length      = 'dimensions.length',
+                           width       = 'dimensions.width',
+                           home.name   = 'home.name', 
+                           home.code   = 'home.code' , 
+                           home.id     = 'home.id', 
+                           home.interstate.travel = 'home.interstateTravel' ,
+                           away.name              = 'away.name', 
+                           away.code              = 'away.code' , 
+                           away.id                = 'away.id', 
+                           away.interstate.travel = 'away.interstateTravel' 
+)
 
 #' getMatchPersons_Whitelist
 #'
@@ -2459,10 +2411,10 @@ playerSummaryFile_lookup <- data.frame("SF_METRIC_CODE"     = playerSummaryFileM
 #' This vector contains all of the fields we're exposing in the getSquadPersons() function
 #' @keywords internal
 getSquadPersonsExposedFields <- c(
-  season.id            = "seasonId",
-  squad.name           = "name" , 
-  squad.code           = "code",
-  squad.id             = "id",
+  season.id     = "seasonId",
+  squad.name    = "name" , 
+  squad.code    = "code",
+  squad.id      = "id",
   name          = "players.fullname" ,    # CHANGE: fullname      = "players.fullname",
   display       = "players.displayName",  # CHANGE: display.name  = "players.displayName",
   firstname     = "players.firstname",
@@ -2557,41 +2509,6 @@ getPeriodScoresExposedFields <- c(
   away.period.result      = 'away.periods.result',
   away.period.result.code = 'away.periods.resultCode' ,
   away.match.result       = 'away.result' 
-)
-
-#' getStoppagesWhitelist
-#'
-#' This vector contains all the possible columns in the info portion of the getStoppages() function.
-#' @keywords internal
-getStoppagesWhitelist <- c(
-  "matchId",
-  "stoppages.id", "stoppages.name", "stoppages.code", "stoppages.period",
-  "stoppages.periodSeconds", "stoppages.location.x", "stoppages.location.y",
-  "stoppages.location.xStd", "stoppages.location.yStd",
-  "stoppages.attendance.id", "stoppages.attendance.name", "stoppages.attendance.code",
-  "stoppages.attendance.period", "stoppages.attendance.periodSeconds",
-  "stoppages.hitout.id", "stoppages.hitout.name",
-  "stoppages.hitout.code", "stoppages.hitout.period", "stoppages.hitout.periodSeconds",
-  "stoppages.hitout.player.displayName", "stoppages.hitout.player.fullname",
-  "stoppages.hitout.player.personId", "stoppages.hitout.player.squadId",
-  "stoppages.firstPossession.id", "stoppages.firstPossession.name",
-  "stoppages.firstPossession.code", "stoppages.firstPossession.period",
-  "stoppages.firstPossession.periodSeconds", "stoppages.firstPossession.zone",
-  "stoppages.firstPossession.player.displayName", "stoppages.firstPossession.player.fullname",
-  "stoppages.firstPossession.player.personId", "stoppages.firstPossession.player.squadId",
-  "stoppages.clearance.id", "stoppages.clearance.name", "stoppages.clearance.code",
-  "stoppages.clearance.period", "stoppages.clearance.periodSeconds", "stoppages.clearance.zone",
-  "stoppages.clearance.player.displayName", "stoppages.clearance.player.fullname",
-  "stoppages.clearance.player.personId", "stoppages.clearance.player.squadId",
-  "stoppages.stoppageExit.id", "stoppages.stoppageExit.name", "stoppages.stoppageExit.code",
-  "stoppages.stoppageExit.period", "stoppages.stoppageExit.periodSeconds", "stoppages.stoppageExit.zone",
-  "stoppages.stoppageExit.type", "stoppages.stoppageExit.pressure",
-  "stoppages.stoppageExit.player.displayName", "stoppages.stoppageExit.player.fullname",
-  "stoppages.stoppageExit.player.personId", "stoppages.stoppageExit.player.squadId",
-  "stoppages.stoppageExit.kicking.foot", "stoppages.stoppageExit.kicking.intent",
-  "stoppages.stoppageExit.kicking.distance", "stoppages.stoppageExit.kicking.direction",
-  "stoppages.stoppageExit.location.x", "stoppages.stoppageExit.location.y",
-  "stoppages.stoppageExit.location.xStd", "stoppages.stoppageExit.location.yStd"
 )
 
 #' getStoppagesExposedFields
@@ -2856,3 +2773,133 @@ getSquadsExposedFields_all <- c(
   code = "squads.code" ,              # CHANGE: squad.code = "squads.code"   ,
   id   = "squads.id"                  # CHANGE: squad.id   = "squads.id"            
 )  
+
+
+#' getLeagueLevelsInfoWhitelist
+#'
+#' This vector contains all of the fields possible from the getLeagueLevelsInfo() function
+#' @keywords internal
+getLeagueLevelsInfoWhitelist <- c("league.name",
+                                  "league.code",
+                                  "league.id", 
+                                  "name",
+                                  "code" , 
+                                  "id",
+                                  "levelClassification.id",
+                                  "levelClassification.code" , 
+                                  "currentSeason.seasonId",
+                                  "league.gender",
+                                  "currentSeason.competitionId",
+                                  "currentSeason.championshipId")
+
+#' getSquadsExposedFields_all
+#'
+#' This vector contains all of the fields and renames in the getLeaguesLevelsInfo() function
+#' @keywords internal
+getLeaguesLevelsInfoExposedFields <- c(current.season.id         = "currentSeason.seasonId",
+                                       league.name               = "league.name",
+                                       league.code               = "league.code",
+                                       league.id                 = "league.id", 
+                                       level.name                = "name",
+                                       level.code                = "code" , 
+                                       level.id                  = "id",
+                                       level.classification.id   = "levelClassification.id",
+                                       level.classification.code = "levelClassification.code" , 
+                                       league.gender             = "league.gender",
+                                       competition.id            = "currentSeason.competitionId",
+                                       championship.id           = "currentSeason.championshipId")
+
+
+
+#' getStatisticFlowExposedFields
+#'
+#' This vector contains all of the fields and renames in the getStatisticFlow() function
+#' @keywords internal
+getStatisticFlowExposedFields <- c(trx.id       = "trxId",
+                                   period       = "period",
+                                   period.secs  = "periodSecs",
+                                   zone.logical = "logicalZone", 
+                                   fullname     = "person_fullname" , 
+                                   person.id    = "person_personId",
+                                   squad.code   = "squad_code",
+                                   squad.id     = "squad_id",
+                                   metric.code  = "metrics_code" , 
+                                   value        = "metrics_value")
+
+#' getStatisticFlowWhitelist
+#'
+#' This vector contains all of the fields in the getStatisticFlow() function
+#' @keywords internal
+#' 
+getStatisticFlowWhitelist <- c("trxId","period","periodSecs","logicalZone","person_personId","person_fullname",
+                               "squad_id", "squad_code","metrics_value","metrics_code")
+
+
+#' getSeasonsExposedFields
+#'
+#' This vector contains all the fields we're exposing in the getSeasons function and their equivalent renames.
+#' @keywords internal
+getSeasonsExposedFields <- c(
+  competition.name            = "seasons.competitionName",
+  competition.code            = "seasons.competitionCode",
+  competition.id              = "seasons.competitionId" ,
+  season.id                   = "seasons.id",
+  season.start.date           = "seasons.startDate",
+  season.end.date             = "seasons.endDate",
+  league.id                   = "id",
+  league.name                 = "name",
+  league.code                 = "code",
+  league.gender               = "gender",
+  matches.complete            = "seasons.matches.complete" , 
+  matches.incomplete          = "seasons.matches.incomplete",
+  first.match.start           = "seasons.firstMatchStart",
+  last.completed.round.number = "seasons.rounds.lastCompleted.number",
+  last.completed.round.start  = "seasons.rounds.lastCompleted.start" , 
+  last.completed.round.end    = "seasons.rounds.lastCompleted.end",
+  next.scheduled.round.number = "seasons.rounds.nextScheduled.number" ,
+  next.scheduled.round.start  = "seasons.rounds.nextScheduled.start" ,
+  next.scheduled.round.end    = "seasons.rounds.nextScheduled.end"
+  # field = "startYear",
+  # field = "endYear",
+  # field = "competitionType",
+  # field = "rounds.lastCompleted.id",
+  # field = "rounds.lastCompleted.phaseId",
+  # field = "rounds.lastCompleted.phaseNumber",
+  # field = "rounds.nextScheduled.id",
+  # field = "rounds.nextScheduled.phaseId",
+  # field = "rounds.nextScheduled.phaseNumber",
+)
+
+#' getRuckContestsExposedFields
+#'
+#' This vector contains all the fields we're exposing in the getRuckContests function and their equivalent renames.
+#' @keywords internal
+getRuckContestsExposedFields <- c(match.id                      = 'matchId',
+                                  total.contests                = 'ruckContests.totalContests',
+                                  home.ruck.squad.code          = 'ruckContests.homeRuck.squadCode',
+                                  home.ruck.squad.id            = 'ruckContests.homeRuck.squadId',
+                                  home.ruck.fullname            = 'ruckContests.homeRuck.fullName',
+                                  home.ruck.display.name        = 'ruckContests.homeRuck.displayName',
+                                  home.ruck.person.id           = 'ruckContests.homeRuck.personId',
+                                  away.ruck.squad.code          = 'ruckContests.awayRuck.squadCode',
+                                  away.ruck.squad.id            = 'ruckContests.awayRuck.squadId',
+                                  away.ruck.fullname            = 'ruckContests.awayRuck.fullName',
+                                  away.ruck.display.name        = 'ruckContests.awayRuck.displayName',
+                                  away.ruck.person.id           = 'ruckContests.awayRuck.personId',
+                                  home.ruck.hitouts             = 'ruckContests.homeRuck.hitouts',
+                                  home.ruck.hitouts.advantage   = 'ruckContests.homeRuck.hitoutsToAdvantage',
+                                  home.ruck.hitouts.sharked     = 'ruckContests.homeRuck.hitoutsSharked',
+                                  home.ruck.first.possessions   = 'ruckContests.homeRuck.firstPossessions',
+                                  home.ruck.clearances          = 'ruckContests.homeRuck.clearances',
+                                  home.ruck.goals               = 'ruckContests.homeRuck.goals',
+                                  home.ruck.behinds             = 'ruckContests.homeRuck.behinds',
+                                  home.ruck.points              = 'ruckContests.homeRuck.points',
+                                  away.ruck.hitouts             = 'ruckContests.awayRuck.hitouts',
+                                  away.ruck.hitouts.advantage   = 'ruckContests.awayRuck.hitoutsToAdvantage',
+                                  away.ruck.hitouts.sharked     = 'ruckContests.awayRuck.hitoutsSharked',
+                                  away.ruck.first.possessions   = 'ruckContests.awayRuck.firstPossessions',
+                                  away.ruck.clearances          = 'ruckContests.awayRuck.clearances',
+                                  away.ruck.goals               = 'ruckContests.awayRuck.goals',
+                                  away.ruck.behinds             = 'ruckContests.awayRuck.behinds',
+                                  away.ruck.points              = 'ruckContests.awayRuck.points'
+)

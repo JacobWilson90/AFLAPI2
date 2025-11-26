@@ -326,17 +326,27 @@ getMetrics <- function(matchId,...){
 #'    \item \code{timezone} The timezone of the venue.
 #'    \item \code{length} The length of the venue in metres.
 #'    \item \code{width} The width of the venue in metres.
+#'    \item \code{home.name} Name of the home squad in the given match
+#'    \item \code{home.code} A short code representing the home squad in the given match
+#'    \item \code{home.id} A unique identifier for the home squad in the given match
+#'    \item \code{home.interstate.travel} A \code{TRUE/FALSE} flag signifying if the home squad travelled interstate for this match.
+#'    \item \code{away.name} Name of the away squad in the given match
+#'    \item \code{away.code} A short code representing the away squad in the given match
+#'    \item \code{away.id} A unique identifier for the away squad in the given match
+#'    \item \code{away.interstate.travel} A \code{TRUE/FALSE} flag signifying if the away squad travelled interstate for this match.
 #'}
 #'@examples
 #'getVenue(216085122)
 #'@export
 getVenue <- function(matchId,...){
+  
   # Hit endpoint for response
   rawResponse <- cdAPIresponse(endpoint = paste('matches',matchId,'venue',sep='/'),...)
   
   if(is.null(rawResponse)){
     return(rawResponse)
   } else {
+    
     # Convert response to flat list
     listResponse <- rawResponse %>% resp_body_json(simplifyVector = TRUE)
     
@@ -344,7 +354,7 @@ getVenue <- function(matchId,...){
     returnData <- listResponse %>% as.data.frame() %>% jsonlite::flatten()
     
     # Get vector of the missing fields (IF ANY) in the call info
-    missing <- setdiff(getVenueWhitelist,names(returnData))
+    missing <- setdiff(getVenueExposedFields,names(returnData))
     
     # Add on any of the missing columns in the response 
     returnData[missing] <- lapply(missing, function(x) rep(NA, nrow(returnData)))
@@ -356,31 +366,3 @@ getVenue <- function(matchId,...){
   return(returnData)
 }
 
-#'Match Periods
-#'
-#'Get details about the periods of a match.
-#'@param matchId A unique numerical identifier of a match.
-#'@param ... Arguments to be passed to internal functions, such as \code{envir} or \code{version}.
-#'@return A data frame with details about each match period. Only contains periods that have started.
-#'\itemize{
-#'    \item \code{match.id} A unique numerical identifier of a match.
-#'    \item \code{period} The period of the match.
-#'    \item \code{secs} The elapsed time in seconds for live periods, or the period length for completed periods.
-#'    \item \code{utcPeriodStart} The start time of the period in UTC time.
-#'    \item \code{utcPeriodEnd} The end time of the period in UTC time.
-#'}
-#'@examples
-#'getMatchPeriods(216085122)
-#'@export
-getMatchPeriods <- function(matchId, silenceWarning = FALSE, ...){
-  
-  if(silenceWarning == F) message(paste0("\nWarning Message:\n--> This function has been superseded (will recieve no further development) as of cdAFLAPI v1.5.0\n--> It will be deprecated from all package releases post the end of the 2025 mens AFL season.\n--> Please use getMatch(periods = TRUE) instead.\n\nTo silence this message, pass silenceWarning = TRUE to this function.")); 
-  
-  period_list <- (cdAPI(paste('matches/',matchId,sep=''),df=FALSE,...) %>% content())$periods
-  period_df <- do.call(bind_rows,lapply(period_list,function(x) data.frame(x)))
-  if(!'utcPeriodEnd'%in%names(period_df)) period_df <- period_df %>%
-    mutate(utcPeriodEnd=NA)
-  period_df %>%
-    mutate(match.id=matchId) %>%
-    select(match.id,period,secs='periodSecs',utcPeriodStart,utcPeriodEnd)
-}

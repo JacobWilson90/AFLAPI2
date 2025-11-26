@@ -44,26 +44,47 @@ cdAPI <- function(endpoint,envir=c('','sandbox','dev'),base_url='https://api.afl
 #'@examples
 #'cdAPIresponse(matchId,paste('matches',matchId,'entries',sep='/')
 #'@export
-cdAPIresponse <- function(matchId, endpoint, envir=c('','sandbox','dev'), base_url='https://api.afl.championdata.io',version='v1'){
-  
+cdAPIresponse <- function(matchId, endpoint, envir=c('','sandbox','dev'), base_url='https://api.afl.championdata.io', version='v1', pagination = FALSE, verbose=FALSE){
   # Build URL for response
-  getURL <- gsub('afl-.ch','afl.ch',gsub('afl',paste('afl',envir[1],sep='-'),base_url))
-  
+  getURL  <- gsub('afl-.ch','afl.ch',gsub('afl',paste('afl',envir[1],sep='-'),base_url))
+  fullURL <- modify_url(getURL,path=paste(version,endpoint,sep='/'))
+
+  if(verbose) message("Full URL: ",fullURL)
+
   # Make & perform request
-  request <- request(modify_url(getURL,path=paste(version,endpoint,sep='/'))) %>%       # Make request
+  request <- httr2::request(fullURL) %>%                  # Request URL
     req_headers("accept"          = "text/plain",
                 "Content-Type"    = "application/json",
-                "Accept-Encoding" = "gzip" , 
-                "User-Agent"      = userAgentHeader) %>%                                # Header
-    req_auth_basic(api_un, api_pw) %>%                                                  # Add auth
-    req_error(is_error = \(.) FALSE)  %>%                                               # Disable the normal error handling of httr2
-    req_perform()                                                                       # Perform request                                                                            
-  
-  # Handling of response  
-  if(request$status_code==200){
-    return(request)
+                "Accept-Encoding" = "gzip" ,
+                "User-Agent"      = userAgentHeader) %>%  # U-A Header
+    req_auth_basic(api_un, api_pw) %>%                    # Add auth
+    req_error(is_error = \(.) FALSE)                      # Disable the normal error handling of httr2, if issues they can run through extractError()
+
+  # If pagination = TRUE (flow endpoints) perform iterative request
+  if(pagination){
+    response <- request %>%
+      httr2::req_perform_iterative(
+        next_req = httr2::iterate_with_offset(
+          param_name = "page",
+          start      = 1,
+          resp_pages = getTotalPages # Note: this function has extractError() embedded in it, so any errors will get thrown from here
+        ),                           # Note: nothing will be assigned to 'response' object if error thrown (hence why we can return response below)
+        progress = FALSE
+      )
+
+    return(response)
+    # If pagination = FALSE (default) perform regular request
   } else {
-    extractError(request)
+
+    # Perform request
+    response <- request %>% req_perform()
+
+    # Handling of response
+    if(response$status_code==200){
+      return(response)
+    } else {
+      extractError(response)
+    }
   }
 }
 
@@ -80,7 +101,7 @@ cdAPIresponse <- function(matchId, endpoint, envir=c('','sandbox','dev'), base_u
 #'@examples
 #'cdAPIPOSTresponse(matchId = 120390401, endpoint = "player", payload = payload)
 #'@export
-cdAPIPOSTresponse <- function(matchId,endpoint,payload,baseUrl="https://api.afl.championdata.io",version="v1",envir="") { 
+cdAPIPOSTresponse <- function(matchId, endpoint, payload, baseUrl="https://api.afl.championdata.io", version="v1", envir="", verbose = FALSE) { 
   
   # Player/Squad endpoint based on input
   if(tolower(endpoint) %in% c("player","players")){
@@ -94,6 +115,8 @@ cdAPIPOSTresponse <- function(matchId,endpoint,payload,baseUrl="https://api.afl.
   
   # URL for POST 
   postURL <- modify_url(gsub('afl-.ch','afl.ch',gsub('afl',paste('afl',envir[1],sep='-'),baseUrl)),path=paste(version,endpointString,sep='/'))
+  
+  if(verbose) message("Full URL: ",postURL)
   
   # Create/perform request
   rawResponse = request(postURL) %>%
@@ -118,6 +141,6 @@ cdAPIPOSTresponse <- function(matchId,endpoint,payload,baseUrl="https://api.afl.
   }
   lengthList   <- length(encodeJson)
   lengthErrors <- length(encodeJson[[lengthList]])
-  message("Error(s) [Status: ",rawResponse$status,"]:\n",paste0("--> ",encodeJson[[lengthList]][1:lengthErrors],collapse = "\n"))
+  message("Error(s) [Status: ",rawResponse$status,"]\n",paste0("--> ",encodeJson[[lengthList]][1:lengthErrors],collapse = "\n"))
   return(NULL)
 }

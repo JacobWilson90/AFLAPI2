@@ -52,7 +52,7 @@ cdAFLAPI.version <- function(info="Version"){
       mutate("Packaged" = format(as.POSIXct(gsub("; aaron.brougham", "", Packaged)), "%B %d, %Y") ,
              "Built on R Version" = sub(";.*", "", Built),
              "Installed" = format(as.POSIXct(gsub(".*; ; | UTC; .*", "", Built)), "%B %d, %Y")) %>%
-      select(Package, Version, Description, Author, Maintainer, "Dependencies"=Depends, Packaged, "Built on R Version", "Installed")
+      dplyr::select(Package, Version, Description, Author, Maintainer, "Dependencies"=Depends, Packaged, "Built on R Version", "Installed")
     return(as.list(data))
     # Invalid string entered
   } else {
