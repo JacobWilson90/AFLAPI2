@@ -4,7 +4,14 @@
 \alias{getLadder}
 \title{Ladder}
 \usage{
-getLadder(seasonId, roundNumber, leagueId = 1, levelId = 1, ...)
+getLadder(
+  seasonId,
+  roundNumber = NULL,
+  conference = NULL,
+  leagueId = 1,
+  levelId = 1,
+  ...
+)
 }
 \arguments{
 \item{seasonId}{A numerical identifier of a season. If missing, defaults to the current season of the League Level defined by 'leagueId' and 'levelId'.}

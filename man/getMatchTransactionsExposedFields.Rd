@@ -5,7 +5,7 @@
 \alias{getMatchTransactionsExposedFields}
 \title{getMatchTransactionsExposedFields}
 \format{
-An object of class \code{character} of length 52.
+An object of class \code{character} of length 54.
 }
 \usage{
 getMatchTransactionsExposedFields

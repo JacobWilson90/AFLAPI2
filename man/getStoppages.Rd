@@ -75,6 +75,10 @@ A data frame with all of the stoppages for a given match.
   \item \code{stoppage.attendance.code} A short code representing the type of stoppage being attended.
   \item \code{stoppage.attendance.id} The transaction id that the stoppage attendance is associated to.
   \item \code{stoppage.attendance.period.seconds} The elapsed time (in seconds) within the period of the particular stoppage attendance.
+  \item \code{score.squad.id} The squad.id of the squad responsible for the score.
+  \item \code{score.type} The type of score from the clearance.
+  \item \code{score.points} The points awarded for the score.
+  - The below fields will only be present when \code{stoppageAttendees = TRUE}\cr
   \item \code{stoppage.attendance.home.fullname1} when \code{stoppageAttendees = TRUE}: The full name of the first player attending the stoppage for the home squad.
   \item \code{stoppage.attendance.home.displayname1} when \code{stoppageAttendees = TRUE}: The display name of the first player attending the stoppage for the home squad.
   \item \code{stoppage.attendance.home.personId1} when \code{stoppageAttendees = TRUE}: A unique numerical identifier for the first player attending the stoppage for the home squad.
@@ -106,4 +110,5 @@ Get a dataframe of stoppages for a match.
 }
 \examples{
 getStoppages(matchId = 120390401)
+getStoppages(matchId = 120390401, stoppageAttendees = TRUE)
 }

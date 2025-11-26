@@ -10,7 +10,8 @@ cdAPIPOSTresponse(
   payload,
   baseUrl = "https://api.afl.championdata.io",
   version = "v1",
-  envir = ""
+  envir = "",
+  verbose = FALSE
 )
 }
 \arguments{

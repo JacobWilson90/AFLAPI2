@@ -4,12 +4,40 @@
 \alias{getSquadStatsPOST}
 \title{Match Squad Stats (POST Endpoint)}
 \usage{
-getSquadStatsPOST(matchId, payload, info = FALSE, verbose = F, ...)
+getSquadStatsPOST(matchId, payload, info = FALSE, verbose = FALSE, ...)
 }
 \arguments{
 \item{matchId}{A unique numerical identifier of a match.}
 
-\item{payload}{A nested list containing the parcels of data to be returned by the API. See: \code{createPayload()} as a method of simplifying this step.}
+\item{payload}{A nested list containing the parcels of data to be returned by the API. See: \code{createPayload()} as a method of simplifying this step.
+\describe{
+  \item{\code{metricCodes (list)}}{ A list of the metric codes of the desired metrics (ie. \code{list("TACKLE","CHAIN_LAUNCH_CB_GB")})\cr 
+  Default Behaviour: If no metric code(s) are specifically selected, will return ALL valid metrics.}
+  
+  \item{\code{periods (list)}}{ A list of the desired match periods (ie. \code{list(1,2,3,4)})\cr
+  Default Behaviour: If no period(s) are specifically selected, will return data for the MATCH.}
+  
+  \item{\code{zones (list)}}{ A list of the desired zones (ie. \code{list("AM","D50")})\cr
+  Default Behaviour: If no zones are specifically selected, will return data for ALL zones.}
+  
+  \item{\code{team (character)}}{ A code for which squad to return data for (Squad-Only Parameter) (ie. \code{"home"} or \code{"away"}\cr
+  Default Behaviour: If no team is selected, will return data for BOTH teams}
+  
+  \item{\code{context (character)}}{ The context in which the data will be returned (Squad‐only parameter) (ie. \code{"For"}, \code{"Against"}, \code{"diff"})\cr
+  Default Behaviour: If no context is specifically selected, will return data in the 'For' context.}
+  
+  \item{\code{id (character)}}{ A user‐settable identifier for the given payload, e.g. \code{"Q1_F50_Tackles"})\cr
+  Default Behaviour: If no id is specifically passed in to a given payload list, the given list(s) will have their index in the payload order returned as an integer starting from 0.}
+  
+  \item{\code{lastXseconds (numeric)}}{ Limits statistics to counting events that occurred in the last X number of seconds (ie. lastXseconds = 300 will return data from the last 5 minutes)\cr
+  Default Behaviour: If no lastXseconds value is specifically supplied, NO filter on match period seconds will be applied.}
+  
+  \item{\code{fromPeriodSeconds (numeric)}}{ Limits statistics to counting events from this point in the period/match (ie. fromPeriodSeconds = 300 will return data up to the first 5 minutes onwards)\cr
+  Default Behaviour: If no fromPeriodSeconds value is specifically supplied, NO filter on match period seconds will be applied.}
+  
+  \item{\code{toPeriodSeconds (numeric)}}{ Limits statistics to counting events to this point in the period/match (ie. toPeriodSeconds = 300 will return data from the first 5 minutes onwards)\cr
+  Default Behaviour: If no toPeriodSeconds value is specifically supplied, NO filter on match period seconds will be applied.}
+}}
 
 \item{info}{A logical (\code{TRUE/FALSE}) to include the payload information alongside the data for each payload. Defaults to \code{FALSE}}
 
@@ -30,7 +58,6 @@ A data frame with a list of metrics supplied by the payload for each player in a
    \item \code{value} The numeric metric value with no formatting applied.
    \item \code{display} The formatted metric value as a text string.
    \item \code{id} A unique identifier string able to be supplied by the user for each list in the payload. Defaults to numerical index starting at 0. 
-   
    \item \code{info.metric.codes} (when \code{info = TRUE}) The metric code(s) supplied to the specific list in the payload for that row of data.
    \item \code{info.periods} (when \code{info = TRUE}) The period(s) supplied to the specific list in the payload for that row of data.
    \item \code{info.zones} (when \code{info = TRUE}) The zone(s) supplied to the specific list in the payload for that row of data.
@@ -42,5 +69,19 @@ A data frame with a list of metrics supplied by the payload for each player in a
 Get squad stats for a match via a payload to the POST endpoint.
 }
 \examples{
-getSquadStatsPOST(matchId = 120390401, payload = squadPayload, info = T, verbose = T)
+# Payload Example:
+squadPOSTPayloadExample <- list(
+ squadMetricRequests = list(
+   list(
+     metricCodes = list("TACKLE"),
+     periods     = list(1),
+     zones       = list("F50"),
+     context     = "For",
+     id          = "Q1_F50_Tackles"
+   )
+ )
+)
+
+# Function Run:
+getSquadStatsPOST(matchId = 120390401, payload = squadPOSTPayloadExample, info = T, verbose = T)
 }

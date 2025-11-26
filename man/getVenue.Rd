@@ -27,6 +27,14 @@ A data frame with details about the match venue.
    \item \code{timezone} The timezone of the venue.
    \item \code{length} The length of the venue in metres.
    \item \code{width} The width of the venue in metres.
+   \item \code{home.name} Name of the home squad in the given match
+   \item \code{home.code} A short code representing the home squad in the given match
+   \item \code{home.id} A unique identifier for the home squad in the given match
+   \item \code{home.interstate.travel} A \code{TRUE/FALSE} flag signifying if the home squad travelled interstate for this match.
+   \item \code{away.name} Name of the away squad in the given match
+   \item \code{away.code} A short code representing the away squad in the given match
+   \item \code{away.id} A unique identifier for the away squad in the given match
+   \item \code{away.interstate.travel} A \code{TRUE/FALSE} flag signifying if the away squad travelled interstate for this match.
 }
 }
 \description{

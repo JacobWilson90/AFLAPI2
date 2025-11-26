@@ -5,7 +5,7 @@
 \alias{getVenueExposedFields}
 \title{getVenueExposedFields}
 \format{
-An object of class \code{character} of length 13.
+An object of class \code{character} of length 21.
 }
 \usage{
 getVenueExposedFields

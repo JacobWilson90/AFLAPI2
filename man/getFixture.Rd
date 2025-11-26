@@ -4,10 +4,21 @@
 \alias{getFixture}
 \title{Fixture}
 \usage{
-getFixture(seasonId, squadId, leagueId = 1, levelId = 1, ...)
+getFixture(
+  seasonId,
+  squadId = NULL,
+  roundNumber = NULL,
+  leagueId = 1,
+  levelId = 1,
+  ...
+)
 }
 \arguments{
 \item{seasonId}{A numerical identifier of a season. If missing, defaults to the current season of the League Level defined by 'leagueId' and 'levelId'.}
+
+\item{squadId}{An (optional) parameter to specify a specific squad ID to pull in the fixture for a single squad that plays within the given season/league/level's fixture.}
+
+\item{roundNumber}{An (optional) parameter to specify a round number for the given season/league/level's fixture. Defaults to most recent round if not supplied.}
 
 \item{leagueId}{A unique numerical identifier of a league. Defaults to AFL Men's Premiership.}
 

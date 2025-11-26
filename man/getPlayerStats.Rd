@@ -6,13 +6,13 @@
 \usage{
 getPlayerStats(
   matchId,
-  period,
-  zone,
-  metric,
-  team,
-  lastXseconds,
-  from,
-  to,
+  period = NULL,
+  zone = NULL,
+  metric = NULL,
+  team = NULL,
+  lastXseconds = NULL,
+  from = NULL,
+  to = NULL,
   ...
 )
 }
@@ -21,7 +21,7 @@ getPlayerStats(
 
 \item{period}{A numerical indicator of a period to filter results within a match. Accepts integer values.}
 
-\item{zone}{A text indicator of a zone on the field to filter results within a match. Accepts string values "D50","DM","AM","F50".}
+\item{zone}{A text indicator of a zone on the field to filter results within a match. Accepts string values: \code{"D50","DM","AM","F50","CB"}.}
 
 \item{metric}{A text string of specific metric code(s) to be returned. This will result in the endpoint only returning these specific metrics. Note this endpoint is case sensitive and only works with metric codes (ie. \code{c("TACKLE", "GOAL")}}
 
@@ -38,7 +38,6 @@ getPlayerStats(
 \value{
 A data frame with a list of metrics for a match for each player.
 \itemize{
-   \item \code{match.id} A unique numerical identifier of a match.
    \item \code{squad.id} A unique numerical identifier of the squad.
    \item \code{squad.name} The name of the squad.
    \item \code{squad.code} A short code to represent the squad.

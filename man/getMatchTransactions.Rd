@@ -66,6 +66,8 @@ A data frame with a list of transactions for a match.
    \item \code{freekick.context} On free kick transactions, the broad context from which the free kick was awarded.
    \item \code{freekick.reason} On free kick transactions, the specific reason the free kick was awarded.
    \item \code{kickin.direction} On kick in transactions, a text description of the direction taken from the kick in.
+   \item \code{time.capture.UTC} The date and time of the event in UTC.
+   \item \code{time.capture.flag} Boolean indicating if the timestamp was captured using time capture or calculated using period start utc and elapsed seconds.
 }
 }
 \description{

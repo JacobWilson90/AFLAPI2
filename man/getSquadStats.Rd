@@ -6,14 +6,14 @@
 \usage{
 getSquadStats(
   matchId,
-  period,
-  zone,
-  context,
-  metric,
-  team,
-  lastXseconds,
-  from,
-  to,
+  period = NULL,
+  zone = NULL,
+  context = NULL,
+  metric = NULL,
+  team = NULL,
+  lastXseconds = NULL,
+  from = NULL,
+  to = NULL,
   ...
 )
 }
@@ -22,7 +22,7 @@ getSquadStats(
 
 \item{period}{A numerical indicator of a period to filter results within a match. Accepts integer values.}
 
-\item{zone}{A text indicator of a zone on the field to filter results within a match. Accepts string values "D50","DM","AM","F50".}
+\item{zone}{A text indicator of a zone on the field to filter results within a match. Accepts string values: \code{"D50","DM","AM","F50","CB"}.}
 
 \item{context}{A text indicator of the context for squad statistics. Accepts "For" "Against" or "Diff".}
 
