@@ -1,16 +1,17 @@
 Package: cdAFLAPI
 Type: Package
 Title: Champion Data's AFL API
-Version: 1.5.0
+Version: 1.5.2
 Author: Champion Data
 Maintainer: Aaron Brougham <aaron.brougham@championdata.com.au>
 Description: This package contains a suite of functions to interact with Champion Data's AFL API.
     Authorised access to the API is required. For more details contact your client manager at Champion Data or contact the sales team at <sales@championdata.com.au>.
 License: use_proprietary_license()
 Encoding: UTF-8
-Depends: httr, httr2, jsonlite, tidyverse, data.table, purrr
+Depends: R (>= 4.1.0), httr, httr2, jsonlite, tidyverse, data.table,
+        purrr
 Imports: httr (>= 1.4.7), httr2 (>= 1.0.2), jsonlite (>= 1.8.8),
         tidyverse (>= 2.0.0), data.table (>= 1.15.4), purrr (>= 1.0.2)
 RoxygenNote: 7.3.2
 NeedsCompilation: no
-Packaged: 2025-03-05 01:35:29 UTC; aaron.brougham
+Packaged: 2025-11-24 05:38:30 UTC; aaron.brougham
